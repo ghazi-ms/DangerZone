@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +8,8 @@ import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:updated_grad/local_notifications.dart';
 
 import 'notification_service.dart';
+
+List<String> list = <String>['31.7983,35.9326', '32.0235,35.8762', '31.8734,35.8873', '31.9039,35.8669'];
 
 Future<void> backgroundHandler(RemoteMessage message) async {
   print("This is message form background");
@@ -33,7 +33,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  final coor=TextEditingController();
+  final coor = TextEditingController();
   LatLng _center = LatLng(31.872378, 35.885011);
   Set<Circle> _circles = {};
   Set<Polygon> _polygons = {};
@@ -125,28 +125,43 @@ class _GeofenceMapState extends State<GeofenceMap> {
     print('Exited geofence');
     // TODO: Handle exit geofence event
     NotificationService.showBigTextNotification(
-        title: "Exit",
-        body: "Danger!!",
-        fln: flutterLocalNotificationsPlugin);
+        title: "Exit", body: "Danger!!", fln: flutterLocalNotificationsPlugin);
   }
 
-  void add(){
+  void changeDrop() {
+    print("called");
     setState(() {
-
-     final data=coor.text.split(",");
-      // _center = ;
+      final data = dropdownValue.toString().split(",");
+      _center = LatLng(double.parse(data[0]), double.parse(data[1]));
       _circles.add(Circle(
         circleId: CircleId(Time().second.toString()),
-        center: LatLng(double.parse(data[0]),double.parse(data[1])),
+        center: _center,
         radius: 200,
         fillColor: Colors.red.withOpacity(0.5),
         strokeColor: Colors.red,
       ));
     });
   }
+
+  void add() {
+    setState(() {
+      list.add(coor.text);
+      final data = coor.text.split(",");
+      _center = LatLng(double.parse(data[0]), double.parse(data[1]));
+      _circles.add(Circle(
+        circleId: CircleId(Time().second.toString()),
+        center: _center,
+        radius: 200,
+        fillColor: Colors.red.withOpacity(0.5),
+        strokeColor: Colors.red,
+      ));
+    });
+  }
+
+  String dropdownValue = list[0];
+
   @override
   Widget build(BuildContext context) {
-
     _circles.add(Circle(
       circleId: CircleId('Geofence'),
       center: _center,
@@ -170,7 +185,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
         title: Text('Geofence Map'),
       ),
       body: SingleChildScrollView(
-
         child: Column(
           children: [
             SizedBox(
@@ -187,11 +201,34 @@ class _GeofenceMapState extends State<GeofenceMap> {
                 myLocationButtonEnabled: true,
               ),
             ),
-          TextField(
-            controller: coor,
+            DropdownButton<String>(
+              value: dropdownValue,
+              icon: const Icon(Icons.arrow_downward),
+              elevation: 16,
+              style: const TextStyle(color: Colors.deepPurple),
+              underline: Container(
+                height: 2,
+                color: Colors.deepPurpleAccent,
+              ),
+              items: list.map<DropdownMenuItem<String>>((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (String? value) {
 
-          ),
-          ElevatedButton(onPressed: add, child: Text("Add"))
+                // This is called when the user selects an item.
+                setState(() {
+                  dropdownValue = value!;
+                  changeDrop();
+                });
+              },
+            ),
+            TextField(
+              controller: coor,
+            ),
+            ElevatedButton(onPressed: add, child: Text("Add"))
           ],
         ),
       ),
