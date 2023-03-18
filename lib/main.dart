@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:updated_grad/local_notifications.dart';
-import 'notification_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
+import 'package:updated_grad/local_notifications.dart';
+
+import 'notification_service.dart';
 
 Future<void> backgroundHandler(RemoteMessage message) async {
   print("This is message form background");
@@ -30,8 +33,8 @@ class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
-  final LatLng _center = const LatLng(31.872378, 35.885011);
+  final coor=TextEditingController();
+  LatLng _center = LatLng(31.872378, 35.885011);
   Set<Circle> _circles = {};
   Set<Polygon> _polygons = {};
   late GeolocatorPlatform _geolocator;
@@ -121,10 +124,29 @@ class _GeofenceMapState extends State<GeofenceMap> {
   void _onExitGeofence() {
     print('Exited geofence');
     // TODO: Handle exit geofence event
+    NotificationService.showBigTextNotification(
+        title: "Exit",
+        body: "Danger!!",
+        fln: flutterLocalNotificationsPlugin);
   }
 
+  void add(){
+    setState(() {
+
+     final data=coor.text.split(",");
+      // _center = ;
+      _circles.add(Circle(
+        circleId: CircleId(Time().second.toString()),
+        center: LatLng(double.parse(data[0]),double.parse(data[1])),
+        radius: 200,
+        fillColor: Colors.red.withOpacity(0.5),
+        strokeColor: Colors.red,
+      ));
+    });
+  }
   @override
   Widget build(BuildContext context) {
+
     _circles.add(Circle(
       circleId: CircleId('Geofence'),
       center: _center,
@@ -147,15 +169,31 @@ class _GeofenceMapState extends State<GeofenceMap> {
       appBar: AppBar(
         title: Text('Geofence Map'),
       ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _center,
-          zoom: 16.0,
+      body: SingleChildScrollView(
+
+        child: Column(
+          children: [
+            SizedBox(
+              height: 400,
+              width: 350,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(
+                  target: _center,
+                  zoom: 16.0,
+                ),
+                circles: _circles,
+                polygons: _polygons,
+                myLocationEnabled: true,
+                myLocationButtonEnabled: true,
+              ),
+            ),
+          TextField(
+            controller: coor,
+
+          ),
+          ElevatedButton(onPressed: add, child: Text("Add"))
+          ],
         ),
-        circles: _circles,
-        polygons: _polygons,
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
       ),
     ));
   }
