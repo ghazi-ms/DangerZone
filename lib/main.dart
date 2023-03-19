@@ -87,35 +87,41 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
 
   bool _isPositionInsideGeofence(Position position) {
-    for ( var c in _circles) {
+
+    if (!_circles.isEmpty) {
+      for ( var c in _circles) {
 
 
-      double distance = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        c.center.latitude,
-        c.center.longitude,
-      );
+        double distance = Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          c.center.latitude,
+          c.center.longitude,
+        );
 
-      // Check if the position is inside the circle
-      if (distance <= 100) {
-        return true;
-      }
-  }
-      // Check if the position is inside the polygon
-      List<maps_toolkit.LatLng> polygonLatLngs = _polygons.first.points
-          .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
-          .toList();
-      maps_toolkit.LatLng positionLatLng =
-      maps_toolkit.LatLng(position.latitude, position.longitude);
-      bool isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
-          positionLatLng, polygonLatLngs, tolerance: 100, true);
+        // Check if the position is inside the circle
+        if (distance <= 100) {
+          return true;
+        }
+        }
+        // Check if the position is inside the polygon
+        List<maps_toolkit.LatLng> polygonLatLngs = _polygons.first.points
+            .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
+            .toList();
+        maps_toolkit.LatLng positionLatLng =
+        maps_toolkit.LatLng(position.latitude, position.longitude);
+        bool isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
+            positionLatLng, polygonLatLngs, tolerance: 100, true);
 
-      return isInsidePolygon;
+        return isInsidePolygon;
+    }else{
+      return false;
+    }
 
   }
 
   void _onEnterGeofence() {
+
     print('Entered geofence');
     FirebaseMessaging.onBackgroundMessage(backgroundHandler);
     // TODO: Handle enter geofence event
@@ -134,7 +140,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   void changeDrop() {
     print("called");
-
     setState(() {
       final data = dropdownValue.toString().split(",");
       _center = LatLng(double.parse(data[0]), double.parse(data[1]));
@@ -159,23 +164,26 @@ class _GeofenceMapState extends State<GeofenceMap> {
   void add() {
     print("called");
 
-    setState(() {
-      final data = coor.toString().split(",");
-      _center = LatLng(double.parse(data[0]), double.parse(data[1]));
-      Circle c = Circle(
-        circleId: CircleId(Time().second.toString()),
-        center: _center,
-        radius: 400,
-        fillColor: Colors.red.withOpacity(0.5),
-        strokeColor: Colors.red,
-      );
-      if(_circles.contains(c)){
-        print("contains");
-      }else{
-        _circles.add(c);
-      }
+    if (coor.text =="") {
+      list.add(coor.text);
+      setState(() {
+        final data = coor.toString().split(",");
+        _center = LatLng(double.parse(data[0]), double.parse(data[1]));
+        Circle c = Circle(
+          circleId: CircleId(Time().second.toString()),
+          center: _center,
+          radius: 400,
+          fillColor: Colors.red.withOpacity(0.5),
+          strokeColor: Colors.red,
+        );
+        if(_circles.contains(c)){
+          print("contains");
+        }else{
+          _circles.add(c);
+        }
 
-    });
+      });
+    }
     print(_circles.length);
 
   }
