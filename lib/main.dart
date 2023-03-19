@@ -46,6 +46,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
     NotificationService.initialize(flutterLocalNotificationsPlugin);
     //////////
+
     // terminated state
     FirebaseMessaging.instance.getInitialMessage().then((event) {});
 
