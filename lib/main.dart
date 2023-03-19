@@ -6,8 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:updated_grad/local_notifications.dart';
-
 import 'notification_service.dart';
+
 
 List<String> list = <String>['31.7983,35.9326', '32.0235,35.8762', '31.8734,35.8873', '31.9039,35.8669'];
 
@@ -87,28 +87,32 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
 
   bool _isPositionInsideGeofence(Position position) {
-    double distance = Geolocator.distanceBetween(
-      position.latitude,
-      position.longitude,
-      _center.latitude,
-      _center.longitude,
-    );
+    for ( var c in _circles) {
 
-    // Check if the position is inside the circle
-    if (distance <= 100) {
-      return true;
-    }
 
-    // Check if the position is inside the polygon
-    List<maps_toolkit.LatLng> polygonLatLngs = _polygons.first.points
-        .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
-        .toList();
-    maps_toolkit.LatLng positionLatLng =
-        maps_toolkit.LatLng(position.latitude, position.longitude);
-    bool isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
-        positionLatLng, polygonLatLngs, tolerance: 100, true);
+      double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        c.center.latitude,
+        c.center.longitude,
+      );
 
-    return isInsidePolygon;
+      // Check if the position is inside the circle
+      if (distance <= 100) {
+        return true;
+      }
+  }
+      // Check if the position is inside the polygon
+      List<maps_toolkit.LatLng> polygonLatLngs = _polygons.first.points
+          .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
+          .toList();
+      maps_toolkit.LatLng positionLatLng =
+      maps_toolkit.LatLng(position.latitude, position.longitude);
+      bool isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
+          positionLatLng, polygonLatLngs, tolerance: 100, true);
+
+      return isInsidePolygon;
+
   }
 
   void _onEnterGeofence() {
@@ -130,54 +134,72 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   void changeDrop() {
     print("called");
+
     setState(() {
       final data = dropdownValue.toString().split(",");
       _center = LatLng(double.parse(data[0]), double.parse(data[1]));
-      _circles.add(Circle(
+      Circle c = Circle(
         circleId: CircleId(Time().second.toString()),
         center: _center,
         radius: 200,
         fillColor: Colors.red.withOpacity(0.5),
         strokeColor: Colors.red,
-      ));
+      );
+      if(_circles.contains(c)){
+        print("contains");
+      }else{
+        _circles.add(c);
+      }
+
     });
+    print(_circles.length);
+
   }
 
   void add() {
+    print("called");
+
     setState(() {
-      list.add(coor.text);
-      final data = coor.text.split(",");
+      final data = coor.toString().split(",");
       _center = LatLng(double.parse(data[0]), double.parse(data[1]));
-      _circles.add(Circle(
+      Circle c = Circle(
         circleId: CircleId(Time().second.toString()),
         center: _center,
-        radius: 200,
+        radius: 400,
         fillColor: Colors.red.withOpacity(0.5),
         strokeColor: Colors.red,
-      ));
+      );
+      if(_circles.contains(c)){
+        print("contains");
+      }else{
+        _circles.add(c);
+      }
+
     });
+    print(_circles.length);
+
   }
 
   String dropdownValue = list[0];
 
   @override
   Widget build(BuildContext context) {
-    _circles.add(Circle(
-      circleId: CircleId('Geofence'),
-      center: _center,
-      radius: 200,
-      fillColor: Colors.blue.withOpacity(0.5),
-      strokeColor: Colors.blue,
-    ));
-    _polygons.add(Polygon(
-      polygonId: PolygonId('Geofence'),
-      points: [
-        LatLng(31.9397339197085, 35.8867618197085),
-        LatLng(31.9424318802915, 35.8894597802915),
-      ],
-      fillColor: Colors.blue.withOpacity(0.5),
-      strokeColor: Colors.blue,
-    ));
+    // _circles.add(Circle(
+    //   circleId: CircleId('Geofence'),
+    //   center: _center,
+    //   radius: 200,
+    //   fillColor: Colors.blue.withOpacity(0.5),
+    //   strokeColor: Colors.blue,
+    // ));
+    // _polygons.add(Polygon(
+    //   polygonId: PolygonId('Geofence'),
+    //   points: [
+    //     LatLng(31.9397339197085, 35.8867618197085),
+    //     LatLng(31.9424318802915, 35.8894597802915),
+    //   ],
+    //   fillColor: Colors.blue.withOpacity(0.5),
+    //   strokeColor: Colors.blue,
+    // ));
 
     return MaterialApp(
         home: Scaffold(
@@ -187,6 +209,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            _circles.isEmpty ? Text("Empty") :
             SizedBox(
               height: 400,
               width: 350,
@@ -201,6 +224,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
                 myLocationButtonEnabled: true,
               ),
             ),
+
             DropdownButton<String>(
               value: dropdownValue,
               icon: const Icon(Icons.arrow_downward),
