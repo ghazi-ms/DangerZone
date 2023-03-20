@@ -4,21 +4,22 @@ class NotificationService {
   static Future initialize(
       FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
     var androidInitialize =
-        new AndroidInitializationSettings('mipmap/ic_launcher');
+    new AndroidInitializationSettings('mipmap/ic_launcher');
 
     var initializationsSettings =
-        new InitializationSettings(android: androidInitialize);
+    new InitializationSettings(android: androidInitialize);
     await flutterLocalNotificationsPlugin.initialize(initializationsSettings);
   }
 
   static Future showBigTextNotification(
-      {var id = 0,
-      required String title,
-      required String body,
-      var payload,
-      required FlutterLocalNotificationsPlugin fln}) async {
+      {
+        var id = 0,
+        required String title,
+        required String body,
+        var payload,
+        required FlutterLocalNotificationsPlugin fln}) async {
     AndroidNotificationDetails androidPlatformChannelSpecifics =
-        new AndroidNotificationDetails(
+    new AndroidNotificationDetails(
       'you_can_name_it_whatever1',
       'channel_name',
       playSound: true,
