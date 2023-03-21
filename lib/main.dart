@@ -8,6 +8,7 @@ import 'package:updated_grad/serivces/geofence.dart';
 import 'notification_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:background_fetch/background_fetch.dart';
 
 Future<void> backgroundHandler(RemoteMessage message) async {
   print("This is message form background");
@@ -15,9 +16,17 @@ Future<void> backgroundHandler(RemoteMessage message) async {
   print(message.notification?.body);
 }
 
+void backgroundFetchHeadlessTask() async {
+  // Your code to run in the background goes here
+  print("This works fine");
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(backgroundHandler);
+
   runApp(GeofenceMap());
+  // BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+  // BackgroundFetch.start();
 }

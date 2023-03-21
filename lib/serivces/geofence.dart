@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import '../main.dart';
 import '../notification_service.dart';
 import 'location_permission.dart';
+import 'package:background_fetch/background_fetch.dart';
 
 /// Determine the current position of the device.
 ///
@@ -52,6 +53,37 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
     // background state
     FirebaseMessaging.onMessageOpenedApp.listen((event) {});
+
+    BackgroundFetch.registerHeadlessTask(backgroundHandler);
+
+    // Set up the background task
+    BackgroundFetch.configure(
+        BackgroundFetchConfig(
+          minimumFetchInterval: 15, // minimum time between background fetches
+          stopOnTerminate:
+              false, // do not stop background fetch when app is terminated
+          enableHeadless: true, // run task in headless mode
+          requiresBatteryNotLow: false,
+          requiresCharging: false,
+          requiresStorageNotLow: false,
+          requiresDeviceIdle: false,
+        ), (String taskId) async {
+      print('Background fetch triggered');
+      _geolocator.getPositionStream().listen((position) {
+        bool isInsideGeofence = _isPositionInsideGeofence(position);
+        if (isInsideGeofence != _isInsideGeofence) {
+          setState(() {
+            _isInsideGeofence = isInsideGeofence;
+          });
+          if (_isInsideGeofence) {
+            _onEnterGeofence();
+          } else {
+            _onExitGeofence();
+          }
+        }
+      });
+      BackgroundFetch.finish(taskId);
+    });
   }
 
   void _initGeofencing() async {
