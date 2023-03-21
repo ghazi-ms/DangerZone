@@ -85,13 +85,27 @@ class _GeofenceMapState extends State<GeofenceMap> {
       }
     });
   }
+  bool _isPositionIsidePolygon(Position position){
+    // Check if the position is inside the polygon
+    bool isInsidePolygon = false;
+    if(_polygons.isEmpty)
+      return false;
+    for(var i in _polygons){
+      List<maps_toolkit.LatLng> polygonLatLngs = i.points
+          .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
+          .toList();
+      maps_toolkit.LatLng positionLatLng =
+      maps_toolkit.LatLng(position.latitude, position.longitude);
+      isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
+          positionLatLng, polygonLatLngs, tolerance: 100, true);
+    }
 
-  bool _isPositionInsideGeofence(Position position) {
 
+    return isInsidePolygon;
+  }
+  bool _isPositionInsideCircle(Position position){
     if (!_circles.isEmpty) {
-      for ( var c in _circles) {
-
-
+      for (var c in _circles) {
         double distance = Geolocator.distanceBetween(
           position.latitude,
           position.longitude,
@@ -103,20 +117,24 @@ class _GeofenceMapState extends State<GeofenceMap> {
         if (distance <= 100) {
           return true;
         }
-        }
-        // Check if the position is inside the polygon
-        List<maps_toolkit.LatLng> polygonLatLngs = _polygons.first.points
-            .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
-            .toList();
-        maps_toolkit.LatLng positionLatLng =
-        maps_toolkit.LatLng(position.latitude, position.longitude);
-        bool isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
-            positionLatLng, polygonLatLngs, tolerance: 100, true);
 
-        return isInsidePolygon;
+      }
+
+
+    }
+    return false;
+  }
+  bool _isPositionInsideGeofence(Position position) {
+
+    if(_isPositionInsideCircle(position)){
+      return true;
+    }else if (_isPositionIsidePolygon(position)){
+      return true;
     }else{
       return false;
     }
+
+
 
   }
 
@@ -168,6 +186,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       list.add(coor.text);
       setState(() {
         final data = coor.toString().split(",");
+
         _center = LatLng(double.parse(data[0]), double.parse(data[1]));
         Circle c = Circle(
           circleId: CircleId(Time().second.toString()),
@@ -192,13 +211,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   @override
   Widget build(BuildContext context) {
-    // _circles.add(Circle(
-    //   circleId: CircleId('Geofence'),
-    //   center: _center,
-    //   radius: 200,
-    //   fillColor: Colors.blue.withOpacity(0.5),
-    //   strokeColor: Colors.blue,
-    // ));
+
     // _polygons.add(Polygon(
     //   polygonId: PolygonId('Geofence'),
     //   points: [
