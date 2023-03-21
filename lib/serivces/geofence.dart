@@ -67,8 +67,11 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
   bool _isPositionIsidePolygon(Position position){
     // Check if the position is inside the polygon
+    print("polygon called");
     bool isInsidePolygon = false;
     if(_polygons.isEmpty) {
+      print("polygon False");
+      print(_polygons.length);
       return false;
     }
     for(var i in _polygons){
@@ -81,6 +84,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           positionLatLng, polygonLatLngs, tolerance: 100, true);
     }
 
+    print("polygon :"+isInsidePolygon.toString());
 
     return isInsidePolygon;
   }
@@ -162,8 +166,33 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   void add() {
     print("called");
+    setState(() {
+      _polygons.add(Polygon(
+        polygonId: PolygonId(const Time().second.toString()),
+        points: [
+          LatLng(31.8288, 35.9010),
+          LatLng(31.8274, 35.8973),
+          LatLng(31.8236, 35.8999),
+          LatLng(31.8263, 35.9048),
+        ],
+        fillColor: Colors.blue.withOpacity(0.5),
+        strokeColor: Colors.blue,
+      ));
 
-    if (coor.text =="") {
+      _polygons.add(Polygon(
+        polygonId: PolygonId(const Time().second.toString()),
+        points: [
+          LatLng(32.0027842, 35.8658503),
+          LatLng(32.0317505, 35.8658503),
+          LatLng(32.0317505, 35.8876572),
+          LatLng(32.0027842, 35.8876572),
+        ],
+        fillColor: Colors.red.withOpacity(0.5),
+        strokeColor: Colors.red,
+      ));
+    });
+
+    if (coor.text !="") {
       list.add(coor.text);
       setState(() {
         final data = coor.toString().split(",");
@@ -189,29 +218,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
 
   String dropdownValue = list[0];
-  // _polygons.add(Polygon(
-  //   polygonId: PolygonId('Geofence'),
-  //   points: [
-  //     LatLng(32.0027842, 35.8658503),
-  //     LatLng(32.0317505, 35.8658503),
-  //     LatLng(32.0317505, 35.8876572),
-  //     LatLng(32.0027842, 35.8876572),
-  //   ],
-  //   fillColor: Colors.blue.withOpacity(0.5),
-  //   strokeColor: Colors.blue,
-  // ));
+
 @override
   Widget build(BuildContext context) {
 
-    // _polygons.add(Polygon(
-    //   polygonId: PolygonId('Geofence'),
-    //   points: [
-    //     LatLng(31.9397339197085, 35.8867618197085),
-    //     LatLng(31.9424318802915, 35.8894597802915),
-    //   ],
-    //   fillColor: Colors.blue.withOpacity(0.5),
-    //   strokeColor: Colors.blue,
-    // ));
 
     return MaterialApp(
         home: Scaffold(
