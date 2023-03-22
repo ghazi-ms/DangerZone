@@ -27,6 +27,6 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(backgroundHandler);
 
   runApp(GeofenceMap());
-  // BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
-  // BackgroundFetch.start();
+  BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+  BackgroundFetch.start();
 }

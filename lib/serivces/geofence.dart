@@ -30,6 +30,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
   Set<Circle> _circles = {};
   Set<Polygon> _polygons = {};
   late GeolocatorPlatform _geolocator;
+  late GeolocatorPlatform _geolocatorBackGround;
   bool _isInsideGeofence = false;
 
   @override
@@ -38,6 +39,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     LocalNotificationService.initilize();
     super.initState();
     _geolocator = GeolocatorPlatform.instance;
+    _geolocatorBackGround = GeolocatorPlatform.instance;
     _initGeofencing();
 
     NotificationService.initialize(flutterLocalNotificationsPlugin);
@@ -88,19 +90,19 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   void _initGeofencing() async {
     // Subscribe to location updates
-    _geolocator.getPositionStream().listen((position) {
-      bool isInsideGeofence = _isPositionInsideGeofence(position);
-      if (isInsideGeofence != _isInsideGeofence) {
-        setState(() {
-          _isInsideGeofence = isInsideGeofence;
-        });
-        if (_isInsideGeofence) {
-          _onEnterGeofence();
-        } else {
-          _onExitGeofence();
-        }
-      }
-    });
+    // _geolocatorBackGround.getPositionStream().listen((position) {
+    //   bool isInsideGeofence = _isPositionInsideGeofence(position);
+    //   if (isInsideGeofence != _isInsideGeofence) {
+    //     setState(() {
+    //       _isInsideGeofence = isInsideGeofence;
+    //     });
+    //     if (_isInsideGeofence) {
+    //       _onEnterGeofence();
+    //     } else {
+    //       _onExitGeofence();
+    //     }
+    //   }
+    // });
   }
 
   bool _isPositionInsideGeofence(Position position) {
