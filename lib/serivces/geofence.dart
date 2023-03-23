@@ -69,6 +69,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     // Check if the position is inside the polygon
     print("polygon called");
     bool isInsidePolygon = false;
+
     if(_polygons.isEmpty) {
       print("polygon False");
       print(_polygons.length);
@@ -78,10 +79,13 @@ class _GeofenceMapState extends State<GeofenceMap> {
       List<maps_toolkit.LatLng> polygonLatLngs = i.points
           .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
           .toList();
-      maps_toolkit.LatLng positionLatLng =
-      maps_toolkit.LatLng(position.latitude, position.longitude);
-      isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
-          positionLatLng, polygonLatLngs, tolerance: 100, true);
+
+      for (int i =0 ;i<polygonLatLngs.length;i++) {
+        maps_toolkit.LatLng positionLatLng =
+        maps_toolkit.LatLng(position.latitude, position.longitude);
+        isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
+            positionLatLng, polygonLatLngs[i] as List<maps_toolkit.LatLng>, tolerance: 1000, true);
+      }
     }
 
     print("polygon :"+isInsidePolygon.toString());
@@ -89,6 +93,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     return isInsidePolygon;
   }
   bool _isPositionInsideCircle(Position position){
+    print("circle called");
     if (_circles.isNotEmpty) {
       for (var c in _circles) {
         double distance = Geolocator.distanceBetween(
@@ -109,6 +114,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     }
     return false;
   }
+
   bool _isPositionInsideGeofence(Position position) {
 
     if(_isPositionInsideCircle(position)){
@@ -166,21 +172,22 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   void add() {
     print("called");
+    Polygon p=Polygon(
+      polygonId: PolygonId(const Time().second.toString()),
+      points: [
+        LatLng(31.8288, 35.9010),
+        LatLng(31.8274, 35.8973),
+        LatLng(31.8236, 35.8999),
+        LatLng(31.8263, 35.9048),
+      ],
+      fillColor: Colors.blue.withOpacity(0.5),
+      strokeColor: Colors.blue,
+    );
     setState(() {
-      _polygons.add(Polygon(
-        polygonId: PolygonId(const Time().second.toString()),
-        points: [
-          LatLng(31.8288, 35.9010),
-          LatLng(31.8274, 35.8973),
-          LatLng(31.8236, 35.8999),
-          LatLng(31.8263, 35.9048),
-        ],
-        fillColor: Colors.blue.withOpacity(0.5),
-        strokeColor: Colors.blue,
-      ));
+      _polygons.add(p);
 
       _polygons.add(Polygon(
-        polygonId: PolygonId(const Time().second.toString()),
+        polygonId: PolygonId("t1"),
         points: [
           LatLng(32.0027842, 35.8658503),
           LatLng(32.0317505, 35.8658503),
@@ -231,7 +238,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _circles.isEmpty ? const Text("Empty") :
+            (_circles.isEmpty||_polygons.isEmpty) ? const Text("Empty") :
             SizedBox(
               height: 400,
               width: 350,
