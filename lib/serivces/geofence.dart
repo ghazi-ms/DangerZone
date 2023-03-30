@@ -5,7 +5,6 @@ import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:updated_grad/local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:firebase_core/firebase_core.dart';
 import '../main.dart';
 import '../notification_service.dart';
 import 'location_permission.dart';
@@ -30,17 +29,15 @@ class _GeofenceMapState extends State<GeofenceMap> {
   Set<Circle> _circles = {};
   Set<Polygon> _polygons = {};
   late GeolocatorPlatform _geolocator;
-  late GeolocatorPlatform _geolocatorBackGround;
+
   bool _isInsideGeofence = false;
 
   @override
   void initState() {
-    determinePosition();
+    allowLocationService();
     LocalNotificationService.initilize();
     super.initState();
     _geolocator = GeolocatorPlatform.instance;
-    _geolocatorBackGround = GeolocatorPlatform.instance;
-    _initGeofencing();
 
     NotificationService.initialize(flutterLocalNotificationsPlugin);
     //////////
@@ -88,23 +85,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
     });
   }
 
-  void _initGeofencing() async {
-    // Subscribe to location updates
-    // _geolocatorBackGround.getPositionStream().listen((position) {
-    //   bool isInsideGeofence = _isPositionInsideGeofence(position);
-    //   if (isInsideGeofence != _isInsideGeofence) {
-    //     setState(() {
-    //       _isInsideGeofence = isInsideGeofence;
-    //     });
-    //     if (_isInsideGeofence) {
-    //       _onEnterGeofence();
-    //     } else {
-    //       _onExitGeofence();
-    //     }
-    //   }
-    // });
-  }
-
   bool _isPositionInsideGeofence(Position position) {
     double distance = Geolocator.distanceBetween(
       position.latitude,
@@ -124,9 +104,16 @@ class _GeofenceMapState extends State<GeofenceMap> {
         .toList();
     maps_toolkit.LatLng positionLatLng =
         maps_toolkit.LatLng(position.latitude, position.longitude);
-    bool isInsidePolygon = maps_toolkit.PolygonUtil.isLocationOnEdge(
-        positionLatLng, polygonLatLngs, tolerance: 100, true);
 
+    bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
+        positionLatLng, polygonLatLngs, true);
+
+    bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
+        positionLatLng, polygonLatLngs, tolerance: 200, true);
+
+    if (isInsidePolygon == false && allowedDistance == true) {
+      return true;
+    }
     return isInsidePolygon;
   }
 

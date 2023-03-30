@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 
-Future<Position> determinePosition() async {
+Future<Position> allowLocationService() async {
   bool serviceEnabled;
   LocationPermission permission;
 
