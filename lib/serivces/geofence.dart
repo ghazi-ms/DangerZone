@@ -86,16 +86,17 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
 
   bool _isPositionInsideGeofence(Position position) {
-    double distance = Geolocator.distanceBetween(
-      position.latitude,
-      position.longitude,
-      _center.latitude,
-      _center.longitude,
-    );
-
     // Check if the position is inside the circle
-    if (distance <= 100) {
-      return true;
+    for (Circle circle in _circles) {
+      double distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        circle.center.latitude,
+        circle.center.longitude,
+      );
+      if (distance <= 100) {
+        return true;
+      }
     }
 
     // Check if the position is inside the polygon
@@ -141,6 +142,13 @@ class _GeofenceMapState extends State<GeofenceMap> {
       fillColor: Colors.blue.withOpacity(0.5),
       strokeColor: Colors.blue,
     ));
+    _circles.add(Circle(
+      circleId: CircleId('Geofence1'),
+      center: LatLng(31.873379, 35.887123),
+      radius: 100,
+      fillColor: Colors.blue.withOpacity(0.5),
+      strokeColor: Colors.blue,
+    ));
 
     _polygons.add(Polygon(
       polygonId: PolygonId('Geofence'),
@@ -149,6 +157,18 @@ class _GeofenceMapState extends State<GeofenceMap> {
         LatLng(32.0317505, 35.8658503),
         LatLng(32.0317505, 35.8876572),
         LatLng(32.0027842, 35.8876572),
+      ],
+      fillColor: Colors.blue.withOpacity(0.5),
+      strokeColor: Colors.blue,
+    ));
+
+    _polygons.add(Polygon(
+      polygonId: PolygonId('Geofence1'),
+      points: [
+        LatLng(31.872760, 35.897246),
+        LatLng(31.870824, 35.896911),
+        LatLng(31.870703, 35.898831),
+        LatLng(31.872957, 35.898290),
       ],
       fillColor: Colors.blue.withOpacity(0.5),
       strokeColor: Colors.blue,
