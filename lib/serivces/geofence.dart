@@ -100,20 +100,25 @@ class _GeofenceMapState extends State<GeofenceMap> {
     }
 
     // Check if the position is inside the polygon
-    List<maps_toolkit.LatLng> polygonLatLngs = _polygons.first.points
-        .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
-        .toList();
-    maps_toolkit.LatLng positionLatLng =
-        maps_toolkit.LatLng(position.latitude, position.longitude);
+    bool isInsidePolygon = false;
 
-    bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
-        positionLatLng, polygonLatLngs, true);
+    for (Polygon polygon in _polygons) {
+      List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
+          .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
+          .toList();
+      maps_toolkit.LatLng positionLatLng =
+          maps_toolkit.LatLng(position.latitude, position.longitude);
 
-    bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
-        positionLatLng, polygonLatLngs, tolerance: 200, true);
+      bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
+          positionLatLng, polygonLatLngs, true);
 
-    if (isInsidePolygon == false && allowedDistance == true) {
-      return true;
+      bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
+          positionLatLng, polygonLatLngs, tolerance: 100, true);
+
+      if ((isInsidePolygon == false && allowedDistance == true) ||
+          isInsidePolygon == true) {
+        return true;
+      }
     }
     return isInsidePolygon;
   }
