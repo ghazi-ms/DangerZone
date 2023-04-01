@@ -7,6 +7,10 @@ class Cards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void reDirectToMaps(String title){
+
+    }
+
     return mylist.isEmpty? Text("empty"): Container(
       height: MediaQuery.of(context).size.height*0.26,
 
@@ -15,15 +19,10 @@ class Cards extends StatelessWidget {
             elevation: 6,
             margin: EdgeInsets.symmetric(vertical: 6,horizontal: 5),
             child: ListTile(
-              leading: CircleAvatar(
-                radius: 25,
-                child: Padding(
-                    padding: EdgeInsets.all(5),
-                    child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: Text("image")
-                    )
-                ),
+              leading: IconButton(
+                onPressed: (){reDirectToMaps(mylist[index]);},
+                icon: Icon(Icons.map),
+
               ),
               title: Text("خبر مهم",style: Theme.of(context).textTheme.headline6 ,textAlign: TextAlign.end),
               subtitle: Text(mylist[index]+"تفاصيل الخبر"),
