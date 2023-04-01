@@ -122,6 +122,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
         if (distance <= 100) {
          setState(() {
            if(!test.contains(position.toString()))
+             //here add the title from the circles list that should contain the title with the current danger
            test.add(position.toString());
          });
           return true;
