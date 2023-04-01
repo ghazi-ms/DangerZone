@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import 'package:maps_launcher/maps_launcher.dart';
 class Cards extends StatelessWidget {
   List<String> mylist;
   Cards(this.mylist);
 
   Future<void> reDirectToMaps(String title) async {
-    final Uri url = Uri.parse('https://www.google.com/maps/place/$title');
-    if (!await launchUrl(url)) {
-      throw Exception('Could not launch $url');
-    }
+    MapsLauncher.launchQuery('$title');
   }
 
   @override
