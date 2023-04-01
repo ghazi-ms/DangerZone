@@ -5,9 +5,11 @@ import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:updated_grad/local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_core/firebase_core.dart';
 import '../main.dart';
 import '../notification_service.dart';
 import 'location_permission.dart';
+import 'MainLayout.dart';
 import 'package:background_fetch/background_fetch.dart';
 
 /// Determine the current position of the device.
@@ -20,16 +22,26 @@ class GeofenceMap extends StatefulWidget {
   _GeofenceMapState createState() => _GeofenceMapState();
 }
 
+List<String> list = <String>[
+  '31.7983,35.9326',
+  '32.0235,35.8762',
+  '31.8734,35.8873',
+  '31.9039,35.8669'
+];
+List<String> test=<String>[
+  '31.7983,35.9326'
+];
 class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  final coor = TextEditingController();
 
-  final LatLng _center = const LatLng(31.872378, 35.885011);
-  Set<Circle> _circles = {};
-  Set<Polygon> _polygons = {};
+  String firstCentre = list.first;
+  late LatLng center;
+  Set<Circle> circles = {};
+  Set<Polygon> polygons = {};
   late GeolocatorPlatform _geolocator;
-
   bool _isInsideGeofence = false;
 
   @override
@@ -87,7 +99,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   bool _isPositionInsideGeofence(Position position) {
     // Check if the position is inside the circle
-    for (Circle circle in _circles) {
+    for (Circle circle in circles) {
       double distance = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
@@ -102,7 +114,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     // Check if the position is inside the polygon
     bool isInsidePolygon = false;
 
-    for (Polygon polygon in _polygons) {
+    for (Polygon polygon in polygons) {
       List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
           .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
           .toList();
@@ -128,14 +140,18 @@ class _GeofenceMapState extends State<GeofenceMap> {
     FirebaseMessaging.onBackgroundMessage(backgroundHandler);
     // TODO: Handle enter geofence event
     NotificationService.showBigTextNotification(
-        title: "Geofence",
-        body: "Danger!!",
+        title: "Danger!",
+        body: "You have entered a geofence danger",
         fln: flutterLocalNotificationsPlugin);
   }
 
   void _onExitGeofence() {
     print('Exited geofence');
     // TODO: Handle exit geofence event
+    NotificationService.showBigTextNotification(
+        title: "Safe",
+        body: "Exited Danger",
+        fln: flutterLocalNotificationsPlugin);
   }
 
   @override
@@ -178,22 +194,17 @@ class _GeofenceMapState extends State<GeofenceMap> {
       fillColor: Colors.blue.withOpacity(0.5),
       strokeColor: Colors.blue,
     ));
+    center = LatLng(double.parse(firstCentre[0]), double.parse(firstCentre[1]));
 
     return MaterialApp(
         home: Scaffold(
       appBar: AppBar(
-        title: Text('Geofence Map'),
+        title: const Text('Geofence Map'),
       ),
-      body: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _center,
-          zoom: 16.0,
-        ),
-        circles: _circles,
-        polygons: _polygons,
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
+
+      body:MainLayout(coor, center, circles, polygons, list,test)
+
       ),
-    ));
+    );
   }
 }
