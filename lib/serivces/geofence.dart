@@ -107,6 +107,9 @@ class _GeofenceMapState extends State<GeofenceMap> {
         circle.center.longitude,
       );
       if (distance <= 100) {
+        if(!test.contains(position.toString()))
+          //here add the title from the circles list that should contain the title with the current danger
+          test.add(position.toString());
         return true;
       }
     }
@@ -129,6 +132,9 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
       if ((isInsidePolygon == false && allowedDistance == true) ||
           isInsidePolygon == true) {
+        if(!test.contains(position.toString()))
+          //here add the title from the circles list that should contain the title with the current danger
+          test.add(position.toString());
         return true;
       }
     }
