@@ -156,6 +156,8 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   @override
   Widget build(BuildContext context) {
+    center = LatLng(double.parse(firstCentre[0]), double.parse(firstCentre[1]));
+
     circles.add(Circle(
       circleId: CircleId('Geofence'),
       center: center,
@@ -194,7 +196,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
       fillColor: Colors.blue.withOpacity(0.5),
       strokeColor: Colors.blue,
     ));
-    center = LatLng(double.parse(firstCentre[0]), double.parse(firstCentre[1]));
 
     return MaterialApp(
         home: Scaffold(
