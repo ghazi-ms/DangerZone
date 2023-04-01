@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:updated_grad/widgets/cards.dart';
 class MainLayout extends StatefulWidget {
   TextEditingController coor = TextEditingController();
   LatLng center ;
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
   late List<String> lists;
+  late List<String> tests;
 
-  MainLayout(this.coor, this.center, this.circles, this.polygons,this.lists);
+  MainLayout(this.coor, this.center, this.circles, this.polygons,this.lists,this.tests);
 
   @override
-  State<MainLayout> createState() => _MainLayoutState(this.lists);
+  State<MainLayout> createState() => _MainLayoutState(this.lists,this.tests);
 }
 
 class _MainLayoutState extends State<MainLayout> {
   List<String> list;
+  List<String> test;
+
   late String dropdownValue;
-  _MainLayoutState(this.list);
+  _MainLayoutState(this.list,this.test);
 
   @override
 
@@ -96,7 +100,7 @@ class _MainLayoutState extends State<MainLayout> {
                 (widget.circles.isEmpty && widget.polygons.isEmpty) ? const Text("Empty") :
                     SizedBox(
                       width: MediaQuery.of(context).size.width,
-                      height: MediaQuery.of(context).size.height*0.6,
+                      height: MediaQuery.of(context).size.height*0.40,
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
                           target: widget.center,
@@ -108,39 +112,59 @@ class _MainLayoutState extends State<MainLayout> {
                         myLocationButtonEnabled: true,
                       ),
                     ),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.height*0.50,
+                          child: Column(
+                           children: [ Container(
+                              child: Column(
+                                children: [
+                                DropdownButton<String>(
+                                  value: dropdownValue,
+                                  icon: const Icon(Icons.arrow_downward),
+                                  elevation: 16,
+                                  style: const TextStyle(color: Colors.deepPurple),
+                                  underline: Container(
+                                    height: 2,
+                                    color: Colors.deepPurpleAccent,
+                                  ),
+                                  items: list.map<DropdownMenuItem<String>>((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? value) {
+
+                                    // This is called when the user selects an item.
+                                    setState(() {
+                                      dropdownValue = value!;
+                                      changeDrop();
+                                    });
+                                  },
+                                ),
+                                TextField(
+                                  controller: widget.coor,
+                                ),
+                                ElevatedButton(onPressed: add, child: const Text("Add")), ]
+                        ),
+    ),
+
+                                Cards(test),
 
 
 
-                        DropdownButton<String>(
-                          value: dropdownValue,
-                          icon: const Icon(Icons.arrow_downward),
-                          elevation: 16,
-                          style: const TextStyle(color: Colors.deepPurple),
-                          underline: Container(
-                            height: 2,
-                            color: Colors.deepPurpleAccent,
+
+                            //////////
+                          ]
                           ),
-                          items: list.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                          onChanged: (String? value) {
 
-                            // This is called when the user selects an item.
-                            setState(() {
-                              dropdownValue = value!;
-                              changeDrop();
-                            });
-                          },
+
+
+                          ),
+                          ]
                         ),
-                        TextField(
-                          controller: widget.coor,
-                        ),
-                        ElevatedButton(onPressed: add, child: const Text("Add")),
-                    ]
-      )
+
           );
   }
 }

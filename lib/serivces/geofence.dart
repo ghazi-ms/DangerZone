@@ -21,7 +21,9 @@ List<String> list = <String>[
   '31.8734,35.8873',
   '31.9039,35.8669'
 ];
-
+List<String> test=<String>[
+  '31.7983,35.9326'
+];
 class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -118,6 +120,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
         // Check if the position is inside the circle
         if (distance <= 100) {
+         setState(() {
+           if(!test.contains(position.toString()))
+           test.add(position.toString());
+         });
           return true;
         }
       }
@@ -163,7 +169,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       appBar: AppBar(
         title: const Text('Geofence Map'),
       ),
-      body:MainLayout(coor, center, circles, polygons, list)
+      body:MainLayout(coor, center, circles, polygons, list,test)
 
       ),
     );
