@@ -29,7 +29,7 @@ class Cards extends StatelessWidget {
               leading: IconButton(
                 onPressed: (){reDirectToMaps(mylist[index]);},
                 icon: Icon(Icons.map),
-
+                iconSize: 50,
               ),
               title: Text("خبر مهم",style: Theme.of(context).textTheme.headline6 ,textAlign: TextAlign.end),
               subtitle: Text(mylist[index]+"تفاصيل الخبر"),

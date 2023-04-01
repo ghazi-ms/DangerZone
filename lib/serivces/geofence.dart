@@ -156,14 +156,14 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   @override
   Widget build(BuildContext context) {
-    _circles.add(Circle(
+    circles.add(Circle(
       circleId: CircleId('Geofence'),
-      center: _center,
+      center: center,
       radius: 100,
       fillColor: Colors.blue.withOpacity(0.5),
       strokeColor: Colors.blue,
     ));
-    _circles.add(Circle(
+    circles.add(Circle(
       circleId: CircleId('Geofence1'),
       center: LatLng(31.873379, 35.887123),
       radius: 100,
@@ -171,7 +171,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       strokeColor: Colors.blue,
     ));
 
-    _polygons.add(Polygon(
+    polygons.add(Polygon(
       polygonId: PolygonId('Geofence'),
       points: [
         LatLng(32.0027842, 35.8658503),
@@ -183,7 +183,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       strokeColor: Colors.blue,
     ));
 
-    _polygons.add(Polygon(
+    polygons.add(Polygon(
       polygonId: PolygonId('Geofence1'),
       points: [
         LatLng(31.872760, 35.897246),
