@@ -3,10 +3,11 @@ import 'package:intl/intl.dart';
 
 import 'package:maps_launcher/maps_launcher.dart';
 class Cards extends StatelessWidget {
-  List<String> mylist;
+  List<dynamic> mylist;
   Cards(this.mylist);
 
-  Future<void> reDirectToMaps(String title) async {
+  Future<void> reDirectToMaps(List<String> title) async {
+
     MapsLauncher.launchQuery('$title');
   }
 
@@ -19,20 +20,26 @@ class Cards extends StatelessWidget {
       height: MediaQuery.of(context).size.height*0.26,
 
       child: ListView.builder(itemBuilder: (ctx, index) {
-        return  Card(
+
+        return  Container(
+          width: MediaQuery.of(context).size.width,
+          height: 88,
+          child: Card(
+
             elevation: 6,
             margin: EdgeInsets.symmetric(vertical: 6,horizontal: 5),
             child: ListTile(
               leading: IconButton(
-                onPressed: (){reDirectToMaps(mylist[index]);},
+                onPressed: (){reDirectToMaps(mylist[index]['coordinates']);},
                 icon: Icon(Icons.map),
-                iconSize: 50,
+                iconSize: 39,
               ),
-              title: Text("خبر مهم",style: Theme.of(context).textTheme.headline6 ,textAlign: TextAlign.end),
-              subtitle: Text(mylist[index]+"تفاصيل الخبر"),
-              trailing: Text(DateFormat.yMMMd().format(DateTime.now())),
+              title: SizedBox(width: MediaQuery.of(context).size.width*0.60,height: 40,child:  Text(mylist[index]['title'],style: Theme.of(context).textTheme.headline6 ,textAlign: TextAlign.end),),
+              subtitle: Text("تفاصيل الخبر"),
+              trailing: SizedBox(width: MediaQuery.of(context).size.width*0.20,height: 30,child: Text(mylist[index]['timeStamp']),),
             ),
-          );
+          ),
+        );
       }
         ,itemCount: mylist.length,
       ),
