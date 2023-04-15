@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:updated_grad/local_notifications.dart';
@@ -95,6 +99,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       });
       BackgroundFetch.finish(taskId);
     });
+
   }
 
   bool _isPositionInsideGeofence(Position position) {
@@ -136,9 +141,61 @@ class _GeofenceMapState extends State<GeofenceMap> {
           //here add the title from the circles list that should contain the title with the current danger
           test.add(position.toString());
         return true;
+        //if true add the data to history list the pologon id
+
       }
     }
     return isInsidePolygon;
+  }
+  Future getData() async {
+    List<dynamic> thelist =[''];
+    print("start");
+    const apiKey = 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
+    try {
+      Response response = await get(Uri.parse('$apiKey'));
+
+      if (response.statusCode == 200) {
+        setState(() {
+          thelist=json.decode(response.body);
+
+        });
+        List<dynamic> data  = thelist ;
+
+        for (var item in data) {
+          List<dynamic> co = item['Coordinates'];
+
+            List<LatLng> po=[] ;
+
+            for (var i in co) {
+              po.add(LatLng(i[0],i[1]));
+
+            }
+
+            polygons.add(Polygon(
+              polygonId: PolygonId(item['id']),
+              points: po,
+              fillColor: Colors.blue.withOpacity(0.5),
+              strokeColor: Colors.blue,
+            ));
+
+
+          // print(item['title'] +
+          //     "-----" +
+          //     item['Locations'] +
+          //     "-------" +
+          //     item['id']);
+        }
+      } else {
+        print(response.body);
+        throw 'Problem with the get request';
+      }
+    } catch (e) {
+      print(e.toString() + " error");
+    }
+    for(var i in polygons){
+      print(i.mapsId);
+    }
+    print("done");
   }
 
   void _onEnterGeofence() {
@@ -208,8 +265,13 @@ class _GeofenceMapState extends State<GeofenceMap> {
       appBar: AppBar(
         title: const Text('Geofence Map'),
       ),
-
-      body:MainLayout(coor, center, circles, polygons, list,test)
+      body:Column(
+        children: [
+          ElevatedButton(onPressed:getData, child: Text("get Data")),
+          //send history
+          MainLayout(coor, center, circles, polygons, list),
+        ],
+      )
 
       ),
     );

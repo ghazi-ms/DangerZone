@@ -14,22 +14,28 @@ class MainLayout extends StatefulWidget {
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
   late List<String> lists;
-  late List<String> tests;
 
-  MainLayout(this.coor, this.center, this.circles, this.polygons, this.lists,
-      this.tests);
+
+  MainLayout(
+      this.coor,
+        this.center,
+         this.circles,
+         this.polygons,
+       this.lists,
+       );
 
   @override
-  State<MainLayout> createState() => _MainLayoutState(this.lists, this.tests);
+  State<MainLayout> createState() => _MainLayoutState(this.lists);
 }
 
 class _MainLayoutState extends State<MainLayout> {
   List<String> list;
-  List<String> test;
+
+
 
   late String dropdownValue;
 
-  _MainLayoutState(this.list, this.test);
+  _MainLayoutState(this.list);
 
   @override
   void changeDrop() {
@@ -90,50 +96,12 @@ class _MainLayoutState extends State<MainLayout> {
   List<dynamic> thelist =[];
   int tog=0;
 
-  Future getData() async {
-    print("start");
-    const apiKey = 'http://192.168.0.107:5000/';
-    try {
-      Response response = await get(Uri.parse('$apiKey'));
-
-      if (response.statusCode == 200) {
-        setState(() {
-          thelist=json.decode(response.body);
-          tog=1;
-        });
-        List<dynamic> data = thelist;
-
-        for (var item in data) {
-          // List<String> co = [''];
-          // co=item['coordinates'];
-          // for (var i in co) {
-          //   print(i);
-          // }
-
-          print(item['title'] +
-              "-----" +
-              item['Locations'] +
-              "-------" +
-              item['id']);
-        }
-      } else {
-        print(response.body);
-        throw 'Problem with the get request';
-      }
-    } catch (e) {
-      print(e.toString() + " error");
-    }
-
-    print("done");
-  }
-
   Widget build(BuildContext context) {
 
     dropdownValue = list[0];
     return SingleChildScrollView(
       child: Column(children: [
 
-        ElevatedButton(onPressed: getData, child: Text("get Data")),
         Container(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height * 0.50,
@@ -169,9 +137,7 @@ class _MainLayoutState extends State<MainLayout> {
                 ElevatedButton(onPressed: add, child: const Text("Add")),
               ]),
             ),
-
-            tog==1?Cards(thelist):Text(tog.toString()),
-
+            // Cards(//Todo add history list// ),
             //////////
           ]),
         ),
