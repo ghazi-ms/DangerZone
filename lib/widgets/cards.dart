@@ -9,13 +9,23 @@ class Cards extends StatelessWidget {
 
   Cards(this.historyList, this.dataList);
 
-  Future<void> reDirectToMaps(List<String> title) async {
-    MapsLauncher.launchQuery('$title');
+  Future<void> reDirectToMaps(List<dynamic> title) async {
+    MapsLauncher.launchQuery(title.first.toString());
   }
 
   @override
   Widget build(BuildContext context) {
-    return historyList.isEmpty || dataList.isEmpty
+    List<dynamic> MatchedList=[];
+    for(int index=0;index<dataList.length;index++){
+      for(var item in historyList){
+        if (dataList[index]['id']==item ) {
+          
+          MatchedList.add(dataList[index]);
+        }
+      }
+    }
+
+    return MatchedList.isEmpty
         ? Text("empty")
         : Container(
             height: MediaQuery.of(context).size.height * 0.50,
@@ -23,11 +33,8 @@ class Cards extends StatelessWidget {
                 ? Text("data")
                 : ListView.builder(
                     itemBuilder: (ctx, index) {
-                      for (int i = 0; i < historyList.length; i++) {
-                        // print(dataList[index]['id'].toString());
-                        if (historyList[i].substring(10, 19) ==
-                            dataList[index]['id'].toString()) {
-                          return Card(
+
+                           return Card(
                             elevation: 6,
                             margin: EdgeInsets.symmetric(
                                 vertical: 6, horizontal: 5),
@@ -35,7 +42,7 @@ class Cards extends StatelessWidget {
                               leading: IconButton(
                                 onPressed: () {
                                   reDirectToMaps(
-                                      dataList[index]['coordinates']);
+                                      MatchedList[index]['Coordinates']);
                                 },
                                 icon: Icon(Icons.map),
                                 iconSize: 39,
@@ -43,23 +50,27 @@ class Cards extends StatelessWidget {
                               title: SizedBox(
                                 width: MediaQuery.of(context).size.width * 0.60,
                                 height: 40,
-                                child: Text(dataList[index]['title'],
-                                    style:
-                                        Theme.of(context).textTheme.headline6,
-                                    textAlign: TextAlign.end),
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width*.50,
+                                  height: 40,
+                                  child: Text(MatchedList[index]['title'],
+                                      style:
+                                          Theme.of(context).textTheme.headline6,
+                                      textAlign: TextAlign.end),
+                                ),
                               ),
                               subtitle: Text("تفاصيل الخبر"),
                               trailing: SizedBox(
                                 width: MediaQuery.of(context).size.width * 0.20,
                                 height: 30,
-                                child: Text(dataList[index]['timeStamp']),
+                                child: Text(MatchedList[index]['timeStamp']),
                               ),
                             ),
                           );
-                        }
-                      }
+
+
                     },
-                    itemCount: dataList.length,
+                    itemCount: MatchedList.length,
                   ),
           );
   }

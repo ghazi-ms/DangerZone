@@ -40,6 +40,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   final coor = TextEditingController();
+  final testingText = TextEditingController();
 
   String firstCentre = list.first;
   late LatLng center;
@@ -118,7 +119,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           setState(() {
             print("enttt");
             print(circle.circleId.toString());
-            historyList.add(circle.circleId.toString());
+            historyList.add(circle.circleId.toString().substring(10,20));
           });
         }
 
@@ -148,7 +149,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           setState(() {
             print("enterd");
             print(polygon.polygonId.toString());
-            historyList.add(polygon.polygonId.toString());
+            historyList.add(polygon.polygonId.toString().substring(10,20));
           });
         }
 
@@ -271,8 +272,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
     MapsLauncher.launchQuery('$title');
   }
   void getList(){
+
     print("object");
     for(Polygon p in polygons){
+      print(p.polygonId.toString().substring(10,20));
       print(" maps id"+p.mapsId.toString());
       print(" pol id"+p.polygonId.toString());
       print(" points"+p.points.toString());
@@ -303,6 +306,8 @@ class _GeofenceMapState extends State<GeofenceMap> {
             children: [
               ElevatedButton(onPressed: getData, child: Text("get Data")),
               ElevatedButton(onPressed: getList, child: Text("get list")),
+              ElevatedButton(onPressed: getText, child: Text("add")),
+              TextField(controller: testingText,),
               //send history
               // MainLayout(coor, center, circles, polygons, list),
              historyList.isEmpty?Text("no history"): SingleChildScrollView(
@@ -321,5 +326,12 @@ class _GeofenceMapState extends State<GeofenceMap> {
           )
       ),
     );
+  }
+
+  void getText() {
+    setState(() {
+      historyList.add(testingText.text);
+    });
+    print("added"+testingText.text);
   }
 }
