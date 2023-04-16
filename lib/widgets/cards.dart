@@ -18,8 +18,7 @@ class Cards extends StatelessWidget {
     List<dynamic> MatchedList=[];
     for(int index=0;index<dataList.length;index++){
       for(var item in historyList){
-        if (dataList[index]['id']==item ) {
-          
+        if (dataList[index]['id']==item && !MatchedList.contains(item)) {
           MatchedList.add(dataList[index]);
         }
       }

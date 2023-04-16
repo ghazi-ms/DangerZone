@@ -313,15 +313,15 @@ class _GeofenceMapState extends State<GeofenceMap> {
              historyList.isEmpty?Text("no history"): SingleChildScrollView(
                 child: Cards(historyList,dataList),
               ),
-          SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                
-                for(var item in historyList ) Text(item)
-              ],
-            ),
-          )
+          // SingleChildScrollView(
+          //   child: Column(
+          //     mainAxisAlignment: MainAxisAlignment.center,
+          //     children: <Widget>[
+          //
+          //       for(var item in historyList ) Text(item)
+          //     ],
+          //   ),
+          // )
             ],
           )
       ),
