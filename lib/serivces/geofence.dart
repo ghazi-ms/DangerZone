@@ -33,7 +33,7 @@ List<String> list = <String>[
   '31.8734,35.8873',
   '31.9039,35.8669'
 ];
-List<String> historyList = <String>['id98914370'];
+List<String> historyList = <String>[];
 List<dynamic> dataList = [''];
 class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
@@ -148,7 +148,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           setState(() {
             print("enterd");
             print(polygon.polygonId.toString());
-            historyList.add('id98914370');
+            historyList.add(polygon.polygonId.toString());
           });
         }
 
@@ -177,7 +177,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           // }
         });
         List<dynamic> data = dataList;
-
+        Set<Polygon> polygonsTemp = {};
         for (var item in data) {
           List<dynamic> co = item['Coordinates'];
           // print(item['title'] + "----" + co);
@@ -187,22 +187,37 @@ class _GeofenceMapState extends State<GeofenceMap> {
             for (var i in co) {
               po.add(LatLng(double.parse(i[0].toString()), double.parse(i[1].toString())));
             }
-            print(po.toString());
+            // print(po.toString());
             print("id is:"+item['id'].toString()+" name"+item['title'].toString());
-            for(var i in polygons){
-              if (i.polygonId!=item['id']) {
-                setState(() {
+            if (polygons.length==0) {
+              setState(() {
+                print("added"+item['id']);
+                polygons.add(Polygon(
+                  polygonId: PolygonId(item['id']),
+                  points: po,
+                  fillColor: Colors.blue.withOpacity(0.5),
+                  strokeColor: Colors.blue,
+                ));
+              });
+            }else{
+              for(var i in polygons){
+                print(i.polygonId.toString()+" init id of already " +item['id']+" id of item");
+                if (i.polygonId!=item['id']) {
+                  setState(() {
 
-                  polygons.add(Polygon(
-                    polygonId: PolygonId(item['id']),
-                    points: po,
-                    fillColor: Colors.blue.withOpacity(0.5),
-                    strokeColor: Colors.blue,
-                  ));
-                });
-              }  else
-                print("already there");
+                    polygonsTemp.add(Polygon(
+                      polygonId: PolygonId(item['id']),
+                      points: po,
+                      fillColor: Colors.blue.withOpacity(0.5),
+                      strokeColor: Colors.blue,
+                    ));
+                  });
+                }  else
+                  print("already there");
+              }
+              polygons.addAll(polygonsTemp);
             }
+
 
             po=[];
           } else {
@@ -256,18 +271,21 @@ class _GeofenceMapState extends State<GeofenceMap> {
     MapsLauncher.launchQuery('$title');
   }
   void getList(){
-    for(var i in polygons){
-
-      print(i.polygonId);
-      print(i.points);
+    print("object");
+    for(Polygon p in polygons){
+      print(" maps id"+p.mapsId.toString());
+      print(" pol id"+p.polygonId.toString());
+      print(" points"+p.points.toString());
     }
-    for(var i in circles){
-      print(i);
+    for(Circle c in circles){
+      print(c.mapsId);
+      print(c.circleId);
+      print(c);
     }
     if(historyList.isEmpty)
       print("empty");
     for(var i in historyList){
-      print(i);
+      print(i+"his");
     }
   }
 
@@ -287,11 +305,21 @@ class _GeofenceMapState extends State<GeofenceMap> {
               ElevatedButton(onPressed: getList, child: Text("get list")),
               //send history
               // MainLayout(coor, center, circles, polygons, list),
-              SingleChildScrollView(
+             historyList.isEmpty?Text("no history"): SingleChildScrollView(
                 child: Cards(historyList,dataList),
-              )
+              ),
+          SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                
+                for(var item in historyList ) Text(item)
+              ],
+            ),
+          )
             ],
-          )),
+          )
+      ),
     );
   }
 }
