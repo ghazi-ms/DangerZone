@@ -115,7 +115,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
         circle.center.longitude,
       );
       if (distance <= 100) {
-        if (!historyList.contains(circle.circleId.toString())) {
+        if (!historyList.contains(circle.circleId.toString().substring(10,20))) {
           setState(() {
             print("enttt");
             print(circle.circleId.toString());
@@ -145,7 +145,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
       if ((isInsidePolygon == false && allowedDistance == true) ||
           isInsidePolygon == true) {
-        if (!historyList.contains(polygon.polygonId.toString())) {
+        if (!historyList.contains(polygon.polygonId.toString().substring(10,20))) {
           setState(() {
             print("enterd");
             print(polygon.polygonId.toString());
@@ -161,7 +161,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   Future getData() async {
     print("start");
-    const apiKey = 'http://192.168.0.107:5000//';
+    const apiKey = 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
     try {
       Response response = await get(Uri.parse('$apiKey'));
 
@@ -307,6 +307,8 @@ class _GeofenceMapState extends State<GeofenceMap> {
               ElevatedButton(onPressed: getData, child: Text("get Data")),
               ElevatedButton(onPressed: getList, child: Text("get list")),
               ElevatedButton(onPressed: getText, child: Text("add")),
+              ElevatedButton(onPressed: clear, child: Text("clear")),
+
               TextField(controller: testingText,),
               //send history
               // MainLayout(coor, center, circles, polygons, list),
@@ -327,11 +329,20 @@ class _GeofenceMapState extends State<GeofenceMap> {
       ),
     );
   }
+  void clear(){
+    setState(() {
+      historyList=[];
+      notificationMSG='';
 
+    });
+  }
   void getText() {
     setState(() {
-      historyList.add(testingText.text);
+      if(!historyList.contains(testingText.text)) {
+        historyList.add(testingText.text);
+        print("added"+testingText.text);
+      }
     });
-    print("added"+testingText.text);
+
   }
 }
