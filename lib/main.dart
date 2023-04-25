@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'serivces/geofence.dart';
 import 'package:updated_grad/serivces/geofence.dart';
 
@@ -23,7 +24,15 @@ void main() async {
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(backgroundHandler);
 
-  runApp(GeofenceMap());
+  runApp(MyApp());
   BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
   BackgroundFetch.start();
+}
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: GeofenceMap(),
+    );
+  }
 }
