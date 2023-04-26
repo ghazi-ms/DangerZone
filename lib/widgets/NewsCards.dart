@@ -41,6 +41,7 @@ class _NewsCardsState extends State<NewsCards> {
               children: [
                 Container(
                   height: 100,
+                  width: MediaQuery.of(context).size.width,
                   decoration: const BoxDecoration(
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(40),
@@ -58,6 +59,7 @@ class _NewsCardsState extends State<NewsCards> {
                     ),
                   ),
                   child: Stack(
+
                     children: [
                       Positioned(
                         top:10,
@@ -79,6 +81,8 @@ class _NewsCardsState extends State<NewsCards> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             FittedBox(
+
+                              fit: BoxFit.contain,
                               child: Text(
                                 widget.title,
                                 style: const TextStyle(

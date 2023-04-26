@@ -15,7 +15,6 @@ import '../main.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
 import 'location_permission.dart';
-import 'MainLayout.dart';
 import 'package:background_fetch/background_fetch.dart';
 
 /// Determine the current position of the device.
@@ -24,6 +23,8 @@ import 'package:background_fetch/background_fetch.dart';
 /// are denied the `Future` will return an error.
 
 class GeofenceMap extends StatefulWidget {
+  const GeofenceMap({super.key});
+
   @override
   _GeofenceMapState createState() => _GeofenceMapState();
 }
@@ -183,7 +184,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     print("start");
     const apiKey = 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
     try {
-      Response response = await get(Uri.parse('$apiKey'));
+      Response response = await get(Uri.parse(apiKey));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -210,13 +211,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
                   double.parse(i[1].toString())));
             }
             // print(po.toString());
-            print("id is:" +
-                item['id'].toString() +
-                " name" +
-                item['title'].toString());
-            if (polygons.length == 0) {
+            print("id is:${item['id']} name:${item['title']}");
+            if (polygons.isEmpty) {
               setState(() {
-                print("added" + item['id']);
+                print("added {$item['id']}");
                 polygons.add(Polygon(
                   polygonId: PolygonId(item['id']),
                   points: po,
@@ -226,10 +224,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
               });
             } else {
               for (var i in polygons) {
-                print(i.polygonId.toString() +
-                    " init id of already " +
-                    item['id'] +
-                    " id of item");
+
                 if (i.polygonId != item['id']) {
                   setState(() {
                     polygonsTemp.add(Polygon(
@@ -239,8 +234,9 @@ class _GeofenceMapState extends State<GeofenceMap> {
                       strokeColor: Colors.blue,
                     ));
                   });
-                } else
+                } else {
                   print("already there");
+                }
               }
               polygons.addAll(polygonsTemp);
             }
@@ -263,7 +259,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
         throw 'Problem with the get request';
       }
     } catch (e) {
-      print(e.toString() + " error");
+      print("$e error");
       if (e.toString() == 'Connection closed while receiving data') {
         getData();
       }
@@ -301,9 +297,9 @@ class _GeofenceMapState extends State<GeofenceMap> {
     print("object");
     for (Polygon p in polygons) {
       print(p.polygonId.toString().substring(10, 20));
-      print(" maps id" + p.mapsId.toString());
-      print(" pol id" + p.polygonId.toString());
-      print(" points" + p.points.toString());
+      print(" maps id${p.mapsId}");
+      print(" pol id${p.polygonId}");
+      print(" points${p.points}");
     }
     for (Circle c in circles) {
       print(c.mapsId);
@@ -312,7 +308,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     }
     if (historyList.isEmpty) print("empty");
     for (var i in historyList) {
-      print(i + "his");
+      print("${i}his");
     }
   }
 
@@ -329,7 +325,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           ),
           body: Column(
             children: [
-              Container(
+              Container(//maybe not needed
                 width: MediaQuery.of(context).size.width,
                 height: MediaQuery.of(context).size.height*0.75,
                 child: Column(
@@ -340,7 +336,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
                     Row(
                       children: [
                         historyList.isEmpty
-                            ? Text("You are Safe")
+                            ? const Text("You are Safe")
                             : Cards(historyList, dataList),
                       ],
                     ),
@@ -355,10 +351,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
                 height: MediaQuery.of(context).size.height*0.10,
                 child: Row(
                   children: [
-                    ElevatedButton(onPressed: getData, child: Text("get Data")),
-                    ElevatedButton(onPressed: getList, child: Text("get list")),
-                    ElevatedButton(onPressed: getText, child: Text("add")),
-                    ElevatedButton(onPressed: clear, child: Text("clear")),
+                    ElevatedButton(onPressed: getData, child: const Text("get Data")),
+                    ElevatedButton(onPressed: getList, child: const Text("get list")),
+                    ElevatedButton(onPressed: getText, child: const Text("add")),
+                    ElevatedButton(onPressed: clear, child: const Text("clear")),
                   ],
                 ),
 
@@ -383,7 +379,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
     setState(() {
       if (!historyList.contains(testingText.text)) {
         historyList.add(testingText.text);
-        print("added" + testingText.text);
+        print("added${testingText.text}");
       }
     });
   }
