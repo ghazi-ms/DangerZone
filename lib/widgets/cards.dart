@@ -31,40 +31,81 @@ class _CardsState extends State<Cards> {
         }
       }
     }
-    
+
     return Container(
         height: MediaQuery.of(context).size.height * 0.75,
         width: MediaQuery.of(context).size.width,
         child: MatchedList.isEmpty
-            ? Text("Maaaaa")
+            ? const Text("Maaaaa")
             : GridView(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 1,
-                    childAspectRatio: 3 / 2,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 10),
-          children: [
+                    childAspectRatio: 4 / 3,
+                    crossAxisSpacing: 30,
+                    mainAxisSpacing: 25),
+                children: [
+                  for (int index = 0; index < MatchedList.length; index++)
+                    NewsCards(
+                      title: MatchedList[index]['title'],
+                      description: MatchedList[index]['description'],
+                      timestamp: MatchedList[index]['timeStamp'],
+                      Coo: MatchedList[index]['Coordinates'],
+                    ),
+                  NewsCards(
+                    title:
+                        "الرئيس التركي يسلم قائد فريق البحث والانقاذ الدولي الاردني وسام التضحية العظمى",
+                    description:
+                        "سلم الرئيس التركي رجب طيب أردوغان، الثلاثاء، قائد فريق البحث والانقاذ الدولي الاردني المقدم أنس العبادي وسام التضحية العظمى رفيع المستوى من الدرجة الخاصة.جاء ذلك خلال حفل توزيع وسام الدولة للتضحية في المجمع الرئاسي التركي في العاصمة التركية أنقرة.ويأتي الوسام تقديراً لجهود فريق البحث والانقاذ الدولي الأردني التابع لمديرية الأمن العام الدفاع المدني، ودوره في تقديم المساعدة، وإغاثة متضرري الزلزال الذي ضرب جنوبي تركيا في شباط الماضي",
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title: "في أول أيام العيد.. وفاة بحادث تصادم مروع على طريق جرش",
+                    description: "في أول أيام العيد.. وفاة بحادث تصادم مروع على طريق جرش".length.toString(),
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title:
+                        "إغلاق 19 منشأة وإتلاف أطنان من المواد الغذائية خلال عيد الفطر",
+                    description:
+                        "الغذاء والدواء:  كوادر الرقابة والتفتيش أتلفت خلال فترة العيد نحو 3 أطنان من المواد الغذائية,أعلنت مؤسسة الغذاء والدواء عن أن فرق الرقابة والتفتيش التابعة لها أغلقت 19 منشأة غذائية مخالفة لوجود سلبيات حرجةوأوقفت المؤسسة 70 منشأة أخرى عن العمل، خلال 800 جولة تفتيشية نفذتها فرقها الرقابية بفروعها المنتشرة في مختلف مناطق الأردن خلال فترة عيد الفطر، وفق ما جاء في بيان المؤسسة,بدوره قال مدير عام المؤسسة، نزار مهيدات، الثلاثاء: إن كوادر الرقابة والتفتيش أتلفت خلال فترة العيد نحو 3 أطنان من المواد الغذائية المخالفة للاشتراطات الصحية والمعدة في ظروف صحية سيئة، ونحو 900 لتر من المواد الغذائية السائلة.وأضاف أن فرق التفتيش حجزت نحو 28 طنا، و 1500 لتر من الأغذية المتداولة في الأسواق لغايات الفحص المخبري.وأشار إلى أن كوادر المؤسسة في المراكز الجمركية أنجزت نحو 160 بيانا جمركيا خاصا بالمواد الغذائية المستوردة بعد الكشف على الإرساليات الجمركية وسحب العينات، والتأكد من مطابقتها للاشتراطات الصحية والمواصفات القياسية الخاصة بالمادة الغذائية المستوردة",
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title: "مراسل : إخماد حريق مركبة في الكرك دون وقوع إصابات",
+                    description: "asdasdsadasdsadas",
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title: " 3 إصابات بحادث تصادم في إربد",
+                    description: " 3 إصابات بحادث تصادم في إربد".length.toString(),
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title: "إصابة 5 أشخاص بحادث تصادم في الطفيلة",
+                    description: "asdasdsadasdsadas",
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title: "مسيرة ليلية في معان للافراج عن المعتقلين ووقف ملاحقة مشاركين باضراب الشاحنات",
+                    description: "asdasdsadasdsadas",
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
+                  NewsCards(
+                    title: "الجبور: منسوب المياه في بعض مناطق الزرقاء وصل الى (2.5) مترا والسيول جرفتمسيرة ليلية في معان للافراج عن المعتقلين ووقف ملاحقة مشاركين باضراب الشاحنات ",
+                    description: "الجبور: منسوب المياه في بعض مناطق الزرقاء وصل الى (2.5) مترا والسيول جرفتمسيرة ليلية في معان للافراج عن المعتقلين ووقف ملاحقة مشاركين باضراب الشاحنات ".length.toString(),
+                    timestamp: DateTime.now().toString(),
+                    Coo: const [45884.184, 84654.4684],
+                  ),
 
-             for(int index =0;index <MatchedList.length;index++)
-      NewsCards(title: MatchedList[index]['title'],description: MatchedList[index]['description'],timestamp: MatchedList[index]['timeStamp'],Coo: MatchedList[index]['Coordinates'],)
-
-          ,NewsCards(title: "الرئيس التركي يسلم قائد فريق البحث والانقاذ الدولي الاردني وسام التضحية العظمى",description: "سلم الرئيس التركي رجب طيب أردوغان، الثلاثاء، قائد فريق البحث والانقاذ الدولي الاردني المقدم أنس العبادي وسام التضحية العظمى رفيع المستوى من الدرجة الخاصة.جاء ذلك خلال حفل توزيع وسام الدولة للتضحية في المجمع الرئاسي التركي في العاصمة التركية أنقرة.ويأتي الوسام تقديراً لجهود فريق البحث والانقاذ الدولي الأردني التابع لمديرية الأمن العام الدفاع المدني، ودوره في تقديم المساعدة، وإغاثة متضرري الزلزال الذي ضرب جنوبي تركيا في شباط الماضي",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-    NewsCards(title: "test2",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],)
-    ,NewsCards(title: "إغلاق 19 منشأة وإتلاف أطنان من المواد الغذائية خلال عيد الفطر",description: "الغذاء والدواء:  كوادر الرقابة والتفتيش أتلفت خلال فترة العيد نحو 3 أطنان من المواد الغذائية,أعلنت مؤسسة الغذاء والدواء عن أن فرق الرقابة والتفتيش التابعة لها أغلقت 19 منشأة غذائية مخالفة لوجود سلبيات حرجةوأوقفت المؤسسة 70 منشأة أخرى عن العمل، خلال 800 جولة تفتيشية نفذتها فرقها الرقابية بفروعها المنتشرة في مختلف مناطق الأردن خلال فترة عيد الفطر، وفق ما جاء في بيان المؤسسة,بدوره قال مدير عام المؤسسة، نزار مهيدات، الثلاثاء: إن كوادر الرقابة والتفتيش أتلفت خلال فترة العيد نحو 3 أطنان من المواد الغذائية المخالفة للاشتراطات الصحية والمعدة في ظروف صحية سيئة، ونحو 900 لتر من المواد الغذائية السائلة.وأضاف أن فرق التفتيش حجزت نحو 28 طنا، و 1500 لتر من الأغذية المتداولة في الأسواق لغايات الفحص المخبري.وأشار إلى أن كوادر المؤسسة في المراكز الجمركية أنجزت نحو 160 بيانا جمركيا خاصا بالمواد الغذائية المستوردة بعد الكشف على الإرساليات الجمركية وسحب العينات، والتأكد من مطابقتها للاشتراطات الصحية والمواصفات القياسية الخاصة بالمادة الغذائية المستوردة",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-
-    NewsCards(title: "test3",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test4",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test5",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test8",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test6",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test19",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-            NewsCards(title: "test188",description: "asdasdsadasdsadas",timestamp: DateTime.now().hour.toString(),Coo: [45884.184,84654.4684],),
-
-
-          ],
-              )
-    );
+                ],
+              ));
   }
 }
 //
