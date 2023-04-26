@@ -150,7 +150,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
         if (!historyList
             .contains(polygon.polygonId.toString().substring(10, 20))) {
           setState(() {
-            print("enterd this {$position}");
+
             print(polygon.polygonId.toString());
             // historyList.add([polygon.polygonId.toString().substring(10,20),position.toString()] as String);
             historyList.add(polygon.polygonId.toString().substring(10, 20));
