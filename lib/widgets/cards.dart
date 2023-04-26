@@ -31,7 +31,7 @@ class _CardsState extends State<Cards> {
         }
       }
     }
-    
+
     return SizedBox(
         height: MediaQuery.of(context).size.height * 0.75,
         width: MediaQuery.of(context).size.width,
@@ -43,16 +43,16 @@ class _CardsState extends State<Cards> {
                     childAspectRatio: 3 / 2,
                     crossAxisSpacing: 20,
                     mainAxisSpacing: 10),
-          children: [
-
-             for(int index =0;index <MatchedList.length;index++)
-      NewsCards(title: MatchedList[index]['title'],description: MatchedList[index]['description'],timestamp: MatchedList[index]['timeStamp'],Coo: MatchedList[index]['Coordinates'],)
-
-
-
-          ],
-              )
-    );
+                children: [
+                  for (int index = 0; index < MatchedList.length; index++)
+                    NewsCards(
+                      title: MatchedList[index]['title'],
+                      description: MatchedList[index]['description'],
+                      timestamp: MatchedList[index]['timeStamp'],
+                      Coo: MatchedList[index]['Coordinates'],
+                    )
+                ],
+              ));
   }
 }
 //

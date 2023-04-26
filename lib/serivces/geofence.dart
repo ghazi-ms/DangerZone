@@ -1,26 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
+import 'package:location/location.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:updated_grad/local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import '../main.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
-import 'location_permission.dart';
-import 'MainLayout.dart';
-import 'package:background_fetch/background_fetch.dart';
-
-/// Determine the current position of the device.
-///
-/// When the location services are not enabled or permissions
-/// are denied the `Future` will return an error.
 
 class GeofenceMap extends StatefulWidget {
   @override
@@ -35,6 +26,7 @@ List<String> list = <String>[
 ];
 List<String> historyList = <String>[];
 List<dynamic> dataList = [''];
+
 class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -52,11 +44,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
   final distanceFilter = 50;
   @override
   void initState() {
-
-    allowLocationService();
-    LocalNotificationService.initilize();
     super.initState();
+    LocalNotificationService.initilize();
     _geolocator = GeolocatorPlatform.instance;
+    fetchingLocation();
 
     NotificationService.initialize(flutterLocalNotificationsPlugin);
     //////////
@@ -71,42 +62,32 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
     // background state
     FirebaseMessaging.onMessageOpenedApp.listen((event) {});
-
-    BackgroundFetch.registerHeadlessTask(backgroundHandler);
-
-    // Set up the background task
-     BackgroundFetch.configure(
-        BackgroundFetchConfig(
-          minimumFetchInterval: 15,
-          // minimum time between background fetches
-          stopOnTerminate: false,
-          // do not stop background fetch when app is terminated
-          enableHeadless: true,
-          // run task in headless mode
-          requiresBatteryNotLow: false,
-          requiresCharging: false,
-          requiresStorageNotLow: false,
-          requiresDeviceIdle: false,
-        ), (String taskId) async {
-      print("[BackgroundFetch] task: $taskId");
-      await _getLocationUpdates();
-
-      BackgroundFetch.finish(taskId);
-
-    });
-  _getLocationUpdates();
   }
-  Future<void> _getLocationUpdates() async{
 
-    geolocator= GeolocatorPlatform.instance;
+  Future<void> fetchingLocation() async {
+    Location location = new Location();
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
 
-    geolocator.getPositionStream (
-        desiredAccuracy: LocationAccuracy.best,
-        distanceFilter: distanceFilter)
-        .listen((position) {
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
 
-      // Do something with position data
-      bool isInsideGeofence = _isPositionInsideGeofence(position);
+    location.enableBackgroundMode(enable: true);
+    location.onLocationChanged.listen((LocationData currentLocation) {
+      bool isInsideGeofence = _isPositionInsideGeofence(
+          currentLocation.latitude, currentLocation.longitude);
       if (isInsideGeofence != _isInsideGeofence) {
         setState(() {
           _isInsideGeofence = isInsideGeofence;
@@ -118,28 +99,28 @@ class _GeofenceMapState extends State<GeofenceMap> {
         }
       }
     });
-
   }
 
-  bool _isPositionInsideGeofence(Position position) {
+  bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
+    print('inside isPosition function ${currentLatitude}, ${currentLongitude}');
     // Check if the position is inside the circle
     for (Circle circle in circles) {
       double distance = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
+        currentLatitude,
+        currentLongitude,
         circle.center.latitude,
         circle.center.longitude,
       );
       if (distance <= 100) {
-        if (!historyList.contains(circle.circleId.toString().substring(10,20))) {
+        if (!historyList
+            .contains(circle.circleId.toString().substring(10, 20))) {
           setState(() {
             print("enttt");
             print(circle.circleId.toString());
             // historyList.add([circle.circleId.toString().substring(10,20),position.toString()] as String);
-            historyList.add(circle.circleId.toString().substring(10,20));
+            historyList.add(circle.circleId.toString().substring(10, 20));
           });
         }
-
         return true;
       }
     }
@@ -152,7 +133,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
           .toList();
       maps_toolkit.LatLng positionLatLng =
-          maps_toolkit.LatLng(position.latitude, position.longitude);
+          maps_toolkit.LatLng(currentLatitude, currentLongitude);
 
       bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
           positionLatLng, polygonLatLngs, true);
@@ -162,16 +143,14 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
       if ((isInsidePolygon == false && allowedDistance == true) ||
           isInsidePolygon == true) {
-        if (!historyList.contains(polygon.polygonId.toString().substring(10,20))) {
+        if (!historyList
+            .contains(polygon.polygonId.toString().substring(10, 20))) {
           setState(() {
-            print("enterd this {$position}");
             print(polygon.polygonId.toString());
             // historyList.add([polygon.polygonId.toString().substring(10,20),position.toString()] as String);
-            historyList.add(polygon.polygonId.toString().substring(10,20));
-
+            historyList.add(polygon.polygonId.toString().substring(10, 20));
           });
         }
-
         return true;
       }
     }
@@ -185,7 +164,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
       Response response = await get(Uri.parse('$apiKey'));
 
       if (response.statusCode == 200) {
-
         setState(() {
           // print(response.body.isEmpty);
           dataList = json.decode(response.body);
@@ -200,20 +178,23 @@ class _GeofenceMapState extends State<GeofenceMap> {
         List<dynamic> data = dataList;
         Set<Polygon> polygonsTemp = {};
         for (var item in data) {
-
           List<dynamic> co = item['Coordinates'];
           // print(item['title'] + "----" + co.toString());
           List<LatLng> po = [];
           if (co.length > 1) {
             print(co.length);
             for (var i in co) {
-              po.add(LatLng(double.parse(i[0].toString()), double.parse(i[1].toString())));
+              po.add(LatLng(double.parse(i[0].toString()),
+                  double.parse(i[1].toString())));
             }
             // print(po.toString());
-            print("id is:"+item['id'].toString()+" name"+item['title'].toString());
-            if (polygons.length==0) {
+            print("id is:" +
+                item['id'].toString() +
+                " name" +
+                item['title'].toString());
+            if (polygons.length == 0) {
               setState(() {
-                print("added"+item['id']);
+                print("added" + item['id']);
                 polygons.add(Polygon(
                   polygonId: PolygonId(item['id']),
                   points: po,
@@ -221,12 +202,14 @@ class _GeofenceMapState extends State<GeofenceMap> {
                   strokeColor: Colors.blue,
                 ));
               });
-            }else{
-              for(var i in polygons){
-                print(i.polygonId.toString()+" init id of already " +item['id']+" id of item");
-                if (i.polygonId!=item['id']) {
+            } else {
+              for (var i in polygons) {
+                print(i.polygonId.toString() +
+                    " init id of already " +
+                    item['id'] +
+                    " id of item");
+                if (i.polygonId != item['id']) {
                   setState(() {
-
                     polygonsTemp.add(Polygon(
                       polygonId: PolygonId(item['id']),
                       points: po,
@@ -234,14 +217,13 @@ class _GeofenceMapState extends State<GeofenceMap> {
                       strokeColor: Colors.blue,
                     ));
                   });
-                }  else
+                } else
                   print("already there");
               }
               polygons.addAll(polygonsTemp);
             }
 
-
-            po=[];
+            po = [];
           } else {
             setState(() {
               circles.add(Circle(
@@ -260,7 +242,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       }
     } catch (e) {
       print(e.toString() + " error");
-      if(e.toString()=='Connection closed while receiving data'){
+      if (e.toString() == 'Connection closed while receiving data') {
         getData();
       }
     }
@@ -272,7 +254,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   void _onEnterGeofence() {
     print('Entered geofence');
-    FirebaseMessaging.onBackgroundMessage(backgroundHandler);
+    //FirebaseMessaging.onBackgroundMessage(backgroundHandler);
     // TODO: Handle enter geofence event
     NotificationService.showBigTextNotification(
         title: "Danger!",
@@ -292,83 +274,73 @@ class _GeofenceMapState extends State<GeofenceMap> {
   Future<void> reDirectToMaps(List<String> title) async {
     MapsLauncher.launchQuery('$title');
   }
-  void getList(){
 
+  void getList() {
     print("object");
-    for(Polygon p in polygons){
-      print(p.polygonId.toString().substring(10,20));
-      print(" maps id"+p.mapsId.toString());
-      print(" pol id"+p.polygonId.toString());
-      print(" points"+p.points.toString());
+    for (Polygon p in polygons) {
+      print(p.polygonId.toString().substring(10, 20));
+      print(" maps id" + p.mapsId.toString());
+      print(" pol id" + p.polygonId.toString());
+      print(" points" + p.points.toString());
     }
-    for(Circle c in circles){
+    for (Circle c in circles) {
       print(c.mapsId);
       print(c.circleId);
       print(c);
     }
-    if(historyList.isEmpty)
-      print("empty");
-    for(var i in historyList){
-      print(i+"his");
+    if (historyList.isEmpty) print("empty");
+    for (var i in historyList) {
+      print(i + "his");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
       home: Scaffold(
           appBar: AppBar(
             title: const Text('Geofence Map'),
           ),
           body: Column(
-
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  ElevatedButton(onPressed: getData, child: Text("get Data")),
-                  ElevatedButton(onPressed: getList, child: Text("get list")),
-                  ElevatedButton(onPressed: getText, child: Text("add")),
-                  ElevatedButton(onPressed: clear, child: Text("clear")),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    ElevatedButton(onPressed: getData, child: Text("get Data")),
+                    ElevatedButton(onPressed: getList, child: Text("get list")),
+                    ElevatedButton(onPressed: getText, child: Text("add")),
+                    ElevatedButton(onPressed: clear, child: Text("clear")),
+                  ],
+                ),
               ),
-
-              TextField(controller: testingText,),
+              TextField(
+                controller: testingText,
+              ),
               //send history
-              // MainLayout(coor, center, circles, polygons, list),
-             historyList.isEmpty?Text("You are Safe"):
-               Cards(historyList,dataList),
-
-          // SingleChildScrollView(
-          //   child: Column(
-          //     mainAxisAlignment: MainAxisAlignment.center,
-          //     children: <Widget>[
-          //
-          //       for(var item in historyList ) Text(item)
-          //     ],
-          //   ),
-          // )
+              historyList.isEmpty
+                  ? Text("You are Safe")
+                  : Cards(historyList, dataList),
             ],
-          )
-      ),
+          )),
     );
   }
-  void clear(){
+
+  void clear() {
     setState(() {
-      historyList=[];
-      notificationMSG='';
+      historyList = [];
+      notificationMSG = '';
       polygons.clear();
       circles.clear();
     });
   }
+
   void getText() {
     setState(() {
-      if(!historyList.contains(testingText.text)) {
+      if (!historyList.contains(testingText.text)) {
         historyList.add(testingText.text);
-        print("added"+testingText.text);
+        print("added" + testingText.text);
       }
     });
-
   }
 }
