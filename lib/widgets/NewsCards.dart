@@ -75,21 +75,27 @@ class _NewsCardsState extends State<NewsCards> {
                         ),
                       ),
                       Positioned(
+
+
                         left: 100,
-                        bottom: 20,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+
                           children: [
                             FittedBox(
-
-                              fit: BoxFit.contain,
-                              child: Text(
-                                widget.title,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topLeft,
+                              child: SizedBox(
+                                width: MediaQuery.of(context).size.width - 200,
+                                //height: MediaQuery.of(context).size.height - 100,// subtract the width of the icon and the padding from the card width
+                                child: Text(
+                                  widget.title,
+                                  textDirection: TextDirection.rtl,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
