@@ -38,7 +38,7 @@ class _CardsState extends State<Cards> {
         child: MatchedList.isEmpty
             ? const Text("Maaaaa")
             : GridView(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 1,
                     childAspectRatio: 4 / 3,
                     crossAxisSpacing: 30,
