@@ -133,12 +133,12 @@ class _GeofenceMapState extends State<GeofenceMap> {
       );
       if (distance <= 100) {
         if (!historyList
-            .contains(circle.circleId.toString().substring(10, 20))) {
+            .contains(circle.circleId.toString().substring(9, 19))) {
           setState(() {
             print("enttt");
             print(circle.circleId.toString());
             // historyList.add([circle.circleId.toString().substring(10,20),position.toString()] as String);
-            historyList.add(circle.circleId.toString().substring(10, 20));
+            historyList.add(circle.circleId.toString().substring(9, 19));
           });
         }
 
@@ -202,10 +202,12 @@ class _GeofenceMapState extends State<GeofenceMap> {
         Set<Polygon> polygonsTemp = {};
         for (var item in data) {
           List<dynamic> co = item['Coordinates'];
-          // print(item['title'] + "----" + co.toString());
+          print(item.toString() + "----" + co.toString());
+
           List<LatLng> po = [];
-          if (co.length > 1) {
-            print(co.length);
+
+          if (co.length > 2) {
+
             for (var i in co) {
               po.add(LatLng(double.parse(i[0].toString()),
                   double.parse(i[1].toString())));
@@ -243,16 +245,21 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
             po = [];
           } else {
+            // print('error');
+            // print(co[0][0]);
+            // print(co[0][0].toString()+"   "+co[0][1].toString());
             setState(() {
               circles.add(Circle(
                 circleId: CircleId(item['id']),
-                center: LatLng(double.parse(co[0]), double.parse(co[1])),
+                center: LatLng(double.parse(co.first[0].toString()), double.parse(co.first[1].toString())),
                 radius: 100,
                 fillColor: Colors.blue.withOpacity(0.5),
                 strokeColor: Colors.blue,
               ));
+              print("added circle");
             });
           }
+          co=[];
         }
       } else {
         print(response.body);
@@ -302,6 +309,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
       print(" points${p.points}");
     }
     for (Circle c in circles) {
+      print("circle");
       print(c.mapsId);
       print(c.circleId);
       print(c);
