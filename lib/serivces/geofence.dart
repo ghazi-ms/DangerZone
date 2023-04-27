@@ -6,7 +6,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
 import 'package:location/location.dart';
-import 'package:maps_launcher/maps_launcher.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:updated_grad/local_notifications.dart';
@@ -28,7 +27,7 @@ List<String> list = <String>[
   '31.9039,35.8669'
 ];
 List<String> historyList = <String>[];
-List<dynamic> dataList = [''];
+List<dynamic> dangerZoneDataList = [''];
 
 class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
@@ -45,6 +44,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
   bool _isInsideGeofence = false;
   var geolocator;
   final distanceFilter = 50;
+
   @override
   void initState() {
     super.initState();
@@ -68,7 +68,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
 
   Future<void> fetchingLocation() async {
-    Location location = new Location();
+    Location location = Location();
     bool _serviceEnabled;
     PermissionStatus _permissionGranted;
 
@@ -102,11 +102,10 @@ class _GeofenceMapState extends State<GeofenceMap> {
         }
       }
     });
-
   }
 
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
-    print('inside isPosition function ${currentLatitude}, ${currentLongitude}');
+    print(' $currentLatitude, $currentLongitude');
     // Check if the position is inside the circle
     for (Circle circle in circles) {
       double distance = Geolocator.distanceBetween(
@@ -150,7 +149,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
         if (!historyList
             .contains(polygon.polygonId.toString().substring(10, 20))) {
           setState(() {
-
             print(polygon.polygonId.toString());
             // historyList.add([polygon.polygonId.toString().substring(10,20),position.toString()] as String);
             historyList.add(polygon.polygonId.toString().substring(10, 20));
@@ -162,103 +160,99 @@ class _GeofenceMapState extends State<GeofenceMap> {
     return isInsidePolygon;
   }
 
-  Future getData() async {
-    print("start");
-    const apiKey = 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
+  Future<void> fetchDangerZones() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.showSnackBar(
+      const SnackBar(content: Text('Getting new danger zones')),
+    );
+
+    const apiEndpoint = 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
+
     try {
-      Response response = await get(Uri.parse(apiKey));
+      final response = await get(Uri.parse(apiEndpoint));
+      final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
-
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('Data Received !')),
+        );
         setState(() {
-          // print(response.body.isEmpty);
-          dataList = json.decode(response.body);
-          // if (response.body.isNotEmpty) {
-          //   dataList = json.decode(response.body);
-          //   // print(dataList.toString());
-          // }else{
-          //   print("empty");
-          //   return;
-          // }
+          dangerZoneDataList = data;
         });
-        List<dynamic> data = dataList;
-        Set<Polygon> polygonsTemp = {};
-        for (var item in data) {
-          List<dynamic> co = item['Coordinates'];
-          print(item.toString() + "----" + co.toString());
 
-          List<LatLng> po = [];
+        final polygonsTemp = <Polygon>{};
 
-          if (co.length > 2) {
+        for (final item in dangerZoneDataList) {
+          final coordinates = item['Coordinates'];
+          final points = <LatLng>[];
+          print('$item----$coordinates');
 
-            for (var i in co) {
-              po.add(LatLng(double.parse(i[0].toString()),
-                  double.parse(i[1].toString())));
+          if (coordinates.length > 2) {
+            for (final co in coordinates) {
+              final lat = double.parse(co[0].toString());
+              final lng = double.parse(co[1].toString());
+              points.add(LatLng(lat, lng));
             }
-            // print(po.toString());
-            print("id is:${item['id']} name:${item['title']}");
+            // print(points.toString());
+            print('id is: ${item['id']} name: ${item['title']}');
             if (polygons.isEmpty) {
               setState(() {
-                print("added {$item['id']}");
+                print('added ${item['id']}');
                 polygons.add(Polygon(
                   polygonId: PolygonId(item['id']),
-                  points: po,
+                  points: points,
                   fillColor: Colors.blue.withOpacity(0.5),
                   strokeColor: Colors.blue,
                 ));
               });
             } else {
-              for (var i in polygons) {
-
-                if (i.polygonId != item['id']) {
+              for (final polygon in polygons) {
+                if (polygon.polygonId != item['id']  ) { // Todo () make it on title
                   setState(() {
                     polygonsTemp.add(Polygon(
                       polygonId: PolygonId(item['id']),
-                      points: po,
+                      points: points,
                       fillColor: Colors.blue.withOpacity(0.5),
                       strokeColor: Colors.blue,
                     ));
                   });
                 } else {
-                  print("already there");
+                  print('already there');
                 }
               }
               polygons.addAll(polygonsTemp);
             }
 
-            po = [];
+            points.clear();
           } else {
-            // print('error');
-            // print(co[0][0]);
-            // print(co[0][0].toString()+"   "+co[0][1].toString());
             setState(() {
               circles.add(Circle(
                 circleId: CircleId(item['id']),
-                center: LatLng(double.parse(co.first[0].toString()), double.parse(co.first[1].toString())),
+                center: LatLng(
+                    double.parse(coordinates.first[0].toString()),
+                    double.parse(coordinates.first[1].toString())),
                 radius: 100,
                 fillColor: Colors.blue.withOpacity(0.5),
                 strokeColor: Colors.blue,
               ));
-              print("added circle");
+              print('added circle');
             });
           }
-          co=[];
         }
       } else {
         print(response.body);
         throw 'Problem with the get request';
       }
     } catch (e) {
-      print("$e error");
+      print('$e error');
       if (e.toString() == 'Connection closed while receiving data') {
-        getData();
+        await fetchDangerZones();
       }
     }
-    // for(var i in polygons){
-    //   print(i.mapsId);
-    // }
-    print("done");
+
+    print('done');
   }
+
 
   void _onEnterGeofence() {
     print('Entered geofence');
@@ -277,10 +271,6 @@ class _GeofenceMapState extends State<GeofenceMap> {
         title: "Safe",
         body: "Exited Danger",
         fln: flutterLocalNotificationsPlugin);
-  }
-
-  Future<void> reDirectToMaps(List<String> title) async {
-    MapsLauncher.launchQuery('$title');
   }
 
   void getList() {
@@ -305,56 +295,58 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height -
+        MediaQuery.of(context).padding.top -
+        AppBar().preferredSize.height -
+        MediaQuery.of(context).padding.bottom -
+        (kBottomNavigationBarHeight);
+    final screenWidth = MediaQuery.of(context).size.width;
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-
     ]);
     return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.red,
-            title: const Text('Danger Zone'),
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => fetchDangerZones(),
           ),
-          body: Column(
-            children: [
-              Container(//maybe not needed
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height*0.75,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    //send history
-                    // MainLayout(coor, center, circles, polygons, list),
-                    Row(
-                      children: [
-                        historyList.isEmpty
-                            ? const Text("You are Safe")
-                            : Cards(historyList, dataList),
-                      ],
-                    ),
-
-
-
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height*0.10,
-                child: Row(
-                  children: [
-                    ElevatedButton(onPressed: getData, child: const Text("get Data")),
-                    ElevatedButton(onPressed: getList, child: const Text("get list")),
-                    ElevatedButton(onPressed: getText, child: const Text("add")),
-                    ElevatedButton(onPressed: clear, child: const Text("clear")),
-                  ],
-                ),
-
-              )
-            ],
-          ),
-
-
-      );
+        ],
+        backgroundColor: Colors.red,
+        title: const Text('Danger Zone'),
+      ),
+      body: historyList.isEmpty
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Center(
+                    child: Text(
+                  "You are Safe ! \n you didn't enter any danger zones",
+                  style: TextStyle(
+                    fontSize: 25,
+                  ),
+                  textAlign: TextAlign.center,
+                ))
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Cards(historyList, dangerZoneDataList),
+              ],
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: FloatingActionButton(
+          backgroundColor: Colors.red,
+          child: const Icon(Icons.refresh),
+          onPressed: () => fetchDangerZones(),
+        ),
+      ),
+    );
   }
 
   void clear() {

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:maps_launcher/maps_launcher.dart';
+
+import 'DescriptionPage.dart';
 
 class NewsCards extends StatefulWidget {
   const NewsCards({
@@ -6,12 +9,12 @@ class NewsCards extends StatefulWidget {
     required this.title,
     required this.description,
     required this.timestamp,
-    required this.Coo,
+    required this.coo,
   }) : super(key: key);
 
   final String title;
   final String timestamp;
-  final Coo;
+  final coo;
   final String description;
 
   @override
@@ -22,6 +25,10 @@ class NewsCards extends StatefulWidget {
 class _NewsCardsState extends State<NewsCards> {
   bool isExpanded = false;
   var height;
+  Future<void> reDirectToMaps(List<double> coordinates) async {
+    MapsLauncher.launchQuery('$coordinates');
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -37,7 +44,7 @@ class _NewsCardsState extends State<NewsCards> {
       setState(() {
         TextSpan titleText = TextSpan(
           text: widget.title,
-          style: TextStyle(fontSize: 25),
+          style: const TextStyle(fontSize: 25),
         );
         TextPainter textPainter = TextPainter(
           text: titleText,
@@ -51,7 +58,7 @@ class _NewsCardsState extends State<NewsCards> {
       setState(() {
         TextSpan titleText = TextSpan(
           text: widget.title,
-          style: TextStyle(fontSize: 25),
+          style: const TextStyle(fontSize: 25),
         );
         TextPainter textPainter = TextPainter(
           text: titleText,
@@ -62,145 +69,138 @@ class _NewsCardsState extends State<NewsCards> {
         contianerHeight = MediaQuery.of(context).size.height * 0.30 + textPainter.height;
       });
     }
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DescriptionPage(
+                description: widget.description,
+                title: widget.title,
+              ),
+            ),
+          );
+        },
         child: Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(40),
           ),
           elevation: 5,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                isExpanded = !isExpanded;
-              });
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-
-
-                  height: contianerHeight,
-                  width: MediaQuery.of(context).size.width,
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(40),
-                      topRight: Radius.circular(40),
-                    ),
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFFFF8177),
-                        Color(0xFFFF867A),
-                        Color(0xFFDA5851),
-                        Color(0xFFDB5B57),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: contianerHeight,
+                width: MediaQuery.of(context).size.width,
+                // decoration: BoxDecoration(
+                //   borderRadius: BorderRadius.circular(40),
+                //   gradient: const LinearGradient(
+                //     colors: [
+                //       Color(0xFFFF7043), // deep orange
+                //       Color(0xFFE57373), // light red
+                //       Color(0xFFB71C1C), // dark red
+                //       Color(0xFF1565C0), // blue
+                //       Color(0xFF42A5F5), // light blue
+                //       Color(0xFFE0F7FA), // pale blue
+                //     ],
+                //     begin: Alignment.topLeft,
+                //     end: Alignment.bottomRight,
+                //   ),
+                // ),
+                //new color
+                // decoration: BoxDecoration(
+                //   borderRadius: BorderRadius.circular(40),
+                //   gradient: const LinearGradient(
+                //     colors: [
+                //       Colors.red,
+                //       Color(0xFFFFA07A), // light salmon
+                //       Colors.redAccent,
+                //       Color(0xFFFFC0CB), // pink
+                //     ],
+                //     begin: Alignment.topLeft,
+                //     end: Alignment.bottomRight,
+                //   ),
+                // ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(40),
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFCE3C3C), // Red
+                      Color(0xFFEE5484), // Pink
+                      Color(0xFF942020), // Red
+                    ],
+                    stops: [0, 0.4, 1],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        top: 10,
-                        left: 0,
-                        bottom: 20,
-                        child: IconButton(
-                          onPressed: () {},
-                          icon: const Icon(
-                            Icons.map,
-                            color: Colors.white,
-                            size: 60,
-                          ),
+                ),
+
+
+
+
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 10,
+                      left: 0,
+                      bottom: 20,
+                      child: IconButton(
+                        onPressed: () {
+                          reDirectToMaps(widget.coo[-1]);
+                        },
+                        icon: const Icon(
+                          Icons.map,
+                          color: Colors.white,
+                          size: 60,
                         ),
                       ),
-                      Positioned(
-                        bottom: 10,
-                        left: 15,
-                        child: Text(
-                          widget.timestamp,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
+                    ),
+                    Positioned(
+                      bottom: 10,
+                      left: 15,
+                      child: Text(
+                        widget.timestamp,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
                         ),
                       ),
-                      Positioned(
-                        top: 20,
-                        left: 100,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.topLeft,
-                              child: SizedBox(
-                                width: MediaQuery.of(context).size.width * 0.60,
-                                child: Text(
-                                  widget.title,
-                                  textDirection: TextDirection.rtl,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                    ),
+                    Positioned(
+                      top: 20,
+                      left: 100,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.topLeft,
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.60,
+                              child: Text(
+                                widget.title,
+                                textDirection: TextDirection.rtl,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 10, 20),
-                  child: Container(
-                    height: height,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-
-                        isExpanded
-                            ? SingleChildScrollView(
-                              child: Text(
-                                  widget.description,
-                                  overflow: TextOverflow.visible,
-                                ),
-                            )
-                            : Text(
-                                widget.description,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                        const SizedBox(height: 8),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              if(isExpanded==true){
-                                isExpanded = !isExpanded;
-                                height=MediaQuery.of(context).size.height*0.30;
-                              }else{
-                                isExpanded = !isExpanded;
-                                height=MediaQuery.of(context).size.height*0.10;
-                              }
-                            });
-                          },
-                          child: isExpanded
-                              ? const Text('Read less')
-                              : const Text('Read more'),
-                        ),
-                      ],
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+
+
   }
 }
