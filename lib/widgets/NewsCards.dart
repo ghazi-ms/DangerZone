@@ -26,7 +26,8 @@ class _NewsCardsState extends State<NewsCards> {
   bool isExpanded = false;
   var height;
   Future<void> reDirectToMaps(List<double> coordinates) async {
-    MapsLauncher.launchQuery('$coordinates');
+
+    MapsLauncher.launchQuery('${coordinates}');
   }
 
   @override
@@ -147,7 +148,7 @@ class _NewsCardsState extends State<NewsCards> {
                       bottom: 20,
                       child: IconButton(
                         onPressed: () {
-                          reDirectToMaps(widget.coo[-1]);
+                          reDirectToMaps(widget.coo);
                         },
                         icon: const Icon(
                           Icons.map,

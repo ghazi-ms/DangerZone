@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         tools:replace="android:label"
-        android:label="updated_grad"
+        android:label="Danger Zone"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
        >
