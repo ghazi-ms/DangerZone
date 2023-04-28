@@ -57,28 +57,59 @@ class _NewsCardsState extends State<NewsCards> {
               borderRadius: BorderRadius.circular(40),
               gradient: const LinearGradient(
                 colors: [
-                  Color(0xFFCE3C3C), // Red
-                  Color(0xFFEE5484), // Pink
-                  Color(0xFF942020), // Red
+                  Color(0xFFFF7043), // deep orange
+                  Color(0xFFE57373), // light red
+                  Color(0xFFB71C1C), // dark red
+                  Color(0xFF1565C0), // blue
+                  Color(0xFF42A5F5), // light blue
+                  // Color(0xFFE0F7FA), // pale blue
                 ],
-                stops: [0, 0.4, 1],
-                begin: Alignment.topLeft,
+                begin: Alignment.topCenter,
                 end: Alignment.bottomRight,
               ),
             ),
+            //new color
+            // decoration: BoxDecoration(
+            //   borderRadius: BorderRadius.circular(40),
+            //   gradient: const LinearGradient(
+            //     colors: [
+            //       Colors.red,
+            //       Color(0xFFFFA07A), // light salmon
+            //       Colors.redAccent,
+            //       Color(0xFFFFC0CB), // pink
+            //     ],
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //   ),
+            // ),
+            // decoration: BoxDecoration(
+            //   borderRadius: BorderRadius.circular(40),
+            //   gradient: const LinearGradient(
+            //     colors: [
+            //       Color(0xFFCE3C3C), // Red
+            //       Color(0xFFEE5484), // Pink
+            //       Color(0xFF942020), // Red
+            //     ],
+            //     stops: [0, 0.4, 1],
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //   ),
+            // ),
             child: ListTile(
               contentPadding: const EdgeInsets.only(top: 10,bottom: 40),
 
               leading:
-              IconButton(
-                iconSize: 80,
-                onPressed: () {
-                  reDirectToMaps(widget.coordinate);
-                },
-                icon: const Icon(
-                  Icons.map,
-                  color: Colors.white,
-
+              SizedBox(
+                child: IconButton(
+                  iconSize: 80,
+                  onPressed: () {
+                    reDirectToMaps(widget.coordinate);
+                  },
+                  icon: const Icon(
+                    Icons.map_rounded,
+                    color: Colors.white,
+                    size: 80,
+                  ),
                 ),
               ),
 
