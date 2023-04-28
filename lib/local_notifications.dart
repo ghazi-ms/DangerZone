@@ -6,14 +6,14 @@ class LocalNotificationService {
       FlutterLocalNotificationsPlugin();
 
   static void initilize() {
-    final InitializationSettings initializationSettings =
+    const InitializationSettings initializationSettings =
         InitializationSettings(
             android: AndroidInitializationSettings("@mipmap/ic_launcher"));
     _notificationsPlugin.initialize(initializationSettings);
   }
 
   static void showNotificationOnForeground(RemoteMessage message) {
-    final notificationDetail = NotificationDetails(
+    const notificationDetail = NotificationDetails(
         android: AndroidNotificationDetails(
             "com.example.firebase_push_notification",
             "firebase_push_notification",

@@ -19,30 +19,20 @@ class GeofenceMap extends StatefulWidget {
   @override
   _GeofenceMapState createState() => _GeofenceMapState();
 }
-
-List<String> list = <String>[
-  '31.7983,35.9326',
-  '32.0235,35.8762',
-  '31.8734,35.8873',
-  '31.9039,35.8669'
-];
-List<String> historyList = <String>[];
+List<Map<String, String>> historyList=[];
 List<dynamic> dangerZoneDataList = [''];
 
 class _GeofenceMapState extends State<GeofenceMap> {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  final coor = TextEditingController();
-  final testingText = TextEditingController();
 
-  String firstCentre = list.first;
   late LatLng center;
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
   late GeolocatorPlatform _geolocator;
   bool _isInsideGeofence = false;
-  var geolocator;
+
   final distanceFilter = 50;
 
   @override
@@ -115,13 +105,9 @@ class _GeofenceMapState extends State<GeofenceMap> {
         circle.center.longitude,
       );
       if (distance <= 100) {
-        if (!historyList
-            .contains(circle.circleId.toString().substring(9, 19))) {
+        if (!historyList.any((element) => element['id'] == circle.circleId.value)) {
           setState(() {
-            print("enttt");
-            print(circle.circleId.toString());
-            // historyList.add([circle.circleId.toString().substring(10,20),position.toString()] as String);
-            historyList.add(circle.circleId.toString().substring(9, 19));
+            historyList.add({'id': circle.circleId.value, 'position': '$currentLatitude,$currentLongitude'});
           });
         }
         return true;
@@ -129,14 +115,12 @@ class _GeofenceMapState extends State<GeofenceMap> {
     }
 
     // Check if the position is inside the polygon
-    bool isInsidePolygon = false;
-
     for (Polygon polygon in polygons) {
       List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
           .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
           .toList();
       maps_toolkit.LatLng positionLatLng =
-          maps_toolkit.LatLng(currentLatitude, currentLongitude);
+      maps_toolkit.LatLng(currentLatitude, currentLongitude);
 
       bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
           positionLatLng, polygonLatLngs, true);
@@ -146,18 +130,15 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
       if ((isInsidePolygon == false && allowedDistance == true) ||
           isInsidePolygon == true) {
-        if (!historyList
-            .contains(polygon.polygonId.toString().substring(10, 20))) {
+        if (!historyList.any((element) => element['id'] == polygon.polygonId.value)) {
           setState(() {
-            print(polygon.polygonId.toString());
-            // historyList.add([polygon.polygonId.toString().substring(10,20),position.toString()] as String);
-            historyList.add(polygon.polygonId.toString().substring(10, 20));
+            historyList.add({'id': polygon.polygonId.value, 'position': '$currentLatitude,$currentLongitude'});
           });
         }
         return true;
       }
     }
-    return isInsidePolygon;
+    return false;
   }
 
   Future<void> fetchDangerZones() async {
@@ -184,8 +165,9 @@ class _GeofenceMapState extends State<GeofenceMap> {
 
         for (final item in dangerZoneDataList) {
           final coordinates = item['Coordinates'];
+          // print(coordinates);
           final points = <LatLng>[];
-          print('$item----$coordinates');
+          // print('$item----$coordinates');
 
           if (coordinates.length > 2) {
             for (final co in coordinates) {
@@ -197,21 +179,24 @@ class _GeofenceMapState extends State<GeofenceMap> {
             print('id is: ${item['id']} name: ${item['title']}');
             if (polygons.isEmpty) {
               setState(() {
-                print('added ${item['id']}');
+
                 polygons.add(Polygon(
-                  polygonId: PolygonId(item['id']),
-                  points: points,
+                  polygonId: PolygonId(item['id'].toString()),
+                  points: points.toList(),
                   fillColor: Colors.blue.withOpacity(0.5),
                   strokeColor: Colors.blue,
                 ));
+                print("this is the poly id ${polygons.first.polygonId.value} and points ${polygons.first.points}");
+
               });
             } else {
               for (final polygon in polygons) {
+                print("this is the poly id ${polygon.polygonId.value} and points ${polygons.last.points}");
                 if (polygon.polygonId != item['id']  ) { // Todo () make it on title
                   setState(() {
                     polygonsTemp.add(Polygon(
-                      polygonId: PolygonId(item['id']),
-                      points: points,
+                      polygonId: PolygonId(item['id'].toString()),
+                      points: points.toList(),
                       fillColor: Colors.blue.withOpacity(0.5),
                       strokeColor: Colors.blue,
                     ));
@@ -227,7 +212,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
           } else {
             setState(() {
               circles.add(Circle(
-                circleId: CircleId(item['id']),
+                circleId: CircleId(item['id'].toString()),
                 center: LatLng(
                     double.parse(coordinates.first[0].toString()),
                     double.parse(coordinates.first[1].toString())),
@@ -235,7 +220,7 @@ class _GeofenceMapState extends State<GeofenceMap> {
                 fillColor: Colors.blue.withOpacity(0.5),
                 strokeColor: Colors.blue,
               ));
-              print('added circle');
+              print('added circle and this is the id ${circles.last.circleId}');
             });
           }
         }
@@ -274,33 +259,25 @@ class _GeofenceMapState extends State<GeofenceMap> {
   }
 
   void getList() {
-    print("object");
+
     for (Polygon p in polygons) {
-      print(p.polygonId.toString().substring(10, 20));
-      print(" maps id${p.mapsId}");
-      print(" pol id${p.polygonId}");
-      print(" points${p.points}");
+      print(" pol id ${p.polygonId} and points ${p.points.length}");
+
     }
     for (Circle c in circles) {
-      print("circle");
-      print(c.mapsId);
-      print(c.circleId);
-      print(c);
+
+
+      print('circle id ${c.circleId} and points ${c.center}');
+
     }
-    if (historyList.isEmpty) print("empty");
-    for (var i in historyList) {
-      print("${i}his");
+    if (historyList.isEmpty) print("empty history");
+    for (var item in historyList) {
+      print("the id is ${item['id']} and the position is ${item['position']}");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height -
-        MediaQuery.of(context).padding.top -
-        AppBar().preferredSize.height -
-        MediaQuery.of(context).padding.bottom -
-        (kBottomNavigationBarHeight);
-    final screenWidth = MediaQuery.of(context).size.width;
 
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -308,9 +285,36 @@ class _GeofenceMapState extends State<GeofenceMap> {
     return Scaffold(
       appBar: AppBar(
         actions: [
+
+
+              IconButton(
+                icon: const Icon(Icons.delete_forever),
+                tooltip: 'Delete All Danger Zones',
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Confirm Delete"),
+                      content: const Text("Are you sure you want to delete your danger zones history?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () => clear(context),
+                          child: const Text("Delete"),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+
+
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => fetchDangerZones(),
+            icon: const Icon(Icons.update),
+            onPressed: () => getList(),
           ),
         ],
         backgroundColor: Colors.red,
@@ -346,24 +350,26 @@ class _GeofenceMapState extends State<GeofenceMap> {
           onPressed: () => fetchDangerZones(),
         ),
       ),
+
     );
   }
 
-  void clear() {
+
+  void clear(BuildContext context) {
     setState(() {
       historyList = [];
       notificationMSG = '';
       polygons.clear();
       circles.clear();
     });
+
+    const snackBar = SnackBar(
+
+      content: Text('history cleared !'),
+
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
-  void getText() {
-    setState(() {
-      if (!historyList.contains(testingText.text)) {
-        historyList.add(testingText.text);
-        print("added${testingText.text}");
-      }
-    });
-  }
 }
