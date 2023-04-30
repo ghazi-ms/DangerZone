@@ -1,5 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:maps_launcher/maps_launcher.dart';
+
 import 'package:updated_grad/widgets/NewsCards.dart';
 
 class Cards extends StatefulWidget {
@@ -13,11 +15,10 @@ class Cards extends StatefulWidget {
 }
 
 class _CardsState extends State<Cards> {
-  Future<void> reDirectToMaps(List<dynamic> title) async {
-    MapsLauncher.launchQuery(title.first.toString());
-  }
 
   bool isExpanded = false;
+  List<Map<String, dynamic>> matchedList = [];
+
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +28,7 @@ class _CardsState extends State<Cards> {
         (kBottomNavigationBarHeight);
     final screenWidth = MediaQuery.of(context).size.width;
 
-    List<Map<String, dynamic>> matchedList = [];
+
 
     for (var element in widget.historyList) {
       print("id in history ${element['id'].toString()}");

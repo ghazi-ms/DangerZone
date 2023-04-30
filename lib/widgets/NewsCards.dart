@@ -106,7 +106,7 @@ class _NewsCardsState extends State<NewsCards> {
                     reDirectToMaps(widget.coordinate);
                   },
                   icon: const Icon(
-                    Icons.map_rounded,
+                    Icons.book,
                     color: Colors.white,
                     size: 80,
                   ),
