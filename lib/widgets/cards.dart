@@ -22,11 +22,13 @@ class _CardsState extends State<Cards> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height -
-        MediaQuery.of(context).padding.top -
-        AppBar().preferredSize.height -
-        (kBottomNavigationBarHeight);
+    final RawScreenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final appBarHeight = AppBar().preferredSize.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final buttonBarHeight = MediaQuery.of(context).padding.bottom;
+    final screenHeight = RawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight - 24;
+
 
 
 
