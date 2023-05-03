@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
@@ -14,17 +15,16 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
 
-
-
 class GeofenceMap extends StatefulWidget {
   const GeofenceMap({super.key});
 
   @override
   _GeofenceMapState createState() => _GeofenceMapState();
 }
+
 List<Map<String, String>> historyList = [];
 
- List<dynamic> dangerZoneDataList = [''];
+List<dynamic> dangerZoneDataList = [''];
 
 class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   late String notificationMSG;
@@ -37,19 +37,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   final distanceFilter = 50;
 
   Future<void> saveData() async {
-    print("saving history list");
+    print("saving");
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String jsonString = json.encode(historyList);
     print(jsonString);
     print(await prefs.setString('listItems', jsonString));
-
-    //Danger List Dynamic Save
-    print("Saving Danger List");
-    SharedPreferences prefsDangerList = await SharedPreferences.getInstance();
-
-    List<String> serializedList = dangerZoneDataList.map((item) => json.encode(item)).toList();
-    print(await prefsDangerList.setStringList('listItemsDanger', serializedList));
-
   }
 
   Future<void> loadData() async {
@@ -61,10 +53,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       if (jsonString != null) {
         List<dynamic> jsonList = jsonDecode(jsonString);
         List<Map<String, String>> mapList =
-        jsonList.map((json) => Map<String, String>.from(json)).toList();
+            jsonList.map((json) => Map<String, String>.from(json)).toList();
+        print("enter");
         print(mapList);
         setState(() {
-          historyList=mapList.toList();
+          historyList = mapList.toList();
         });
       } else {
         print('No data found in SharedPreferences');
@@ -72,31 +65,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     } else {
       print('SharedPreferences instance is null');
     }
-
-    //Danger List Dynamic
-    print("Loading Danger Zone List");
-
-    SharedPreferences? prefsDangerList = await SharedPreferences.getInstance();
-
-    if (prefsDangerList != null) {
-      String? jsonString = prefs.getString('listItemsDanger');
-      if (jsonString != null) {
-        List<dynamic> jsonList = jsonDecode(jsonString);
-        List<List<dynamic>> dataList =
-        jsonList.map((json) => List<dynamic>.from(json)).toList();
-        print(dataList);
-        setState(() {
-          dangerZoneDataList = dataList.toList();
-        });
-      } else {
-        print('No data found in SharedPreferences for danger List');
-      }
-    } else {
-      print('SharedPreferences instance is null');
-    }
   }
-
-
 
   @override
   void dispose() {
@@ -111,7 +80,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       saveData();
     }
   }
-
 
   @override
   void initState() {
@@ -137,7 +105,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       // background state
       FirebaseMessaging.onMessageOpenedApp.listen((event) {});
     });
-
   }
 
   Future<void> fetchingLocation() async {
@@ -243,20 +210,52 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     try {
       final response = await get(Uri.parse(apiEndpoint));
-      final data = json.decode(response.body);
+      List<dynamic> data = json.decode(response.body);
 
       if (response.statusCode == 200) {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Data Received !')),
         );
+
         setState(() {
-          dangerZoneDataList = data;
+          List<dynamic> newItems = [];
+
+          if (dangerZoneDataList.isEmpty) {
+            newItems.addAll(data);
+            print("added all");
+          } else {
+            for (final item in data) {
+              bool alreadyAdded = false;
+
+              for (final element in dangerZoneDataList) {
+                if (item == element) {
+                  alreadyAdded = true;
+                  print(":already added");
+                  break;
+                }
+              }
+
+              if (!alreadyAdded) {
+                newItems.add(item);
+                print("added");
+              }
+            }
+          }
+
+          dangerZoneDataList.addAll(newItems);
         });
 
         final polygonsTemp = <Polygon>{};
-
-        for (final item in dangerZoneDataList) {
+        print(dangerZoneDataList.remove(""));
+        for (var item in dangerZoneDataList) {
+          // if (item=="") {
+          //   print("empty");
+          //
+          // }
+          // print("c");
+          //
           final coordinates = item['Coordinates'];
+          // print(coordinates);
           // print(coordinates);
           final points = <LatLng>[];
           // print('$item----$coordinates');
@@ -268,7 +267,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               points.add(LatLng(lat, lng));
             }
             // print(points.toString());
-            print('id is: ${item['id']} name: ${item['title']}');
+            // print('id is: ${item['id']} name: ${item['title']}');
             if (polygons.isEmpty) {
               setState(() {
                 polygons.add(Polygon(
@@ -277,15 +276,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                   fillColor: Colors.blue.withOpacity(0.5),
                   strokeColor: Colors.blue,
                 ));
-                print(
-                    "this is the poly id ${polygons.first.polygonId.value} and points ${polygons.first.points}");
+                // print(
+                //     "this is the poly id ${polygons.first.polygonId.value} and points ${polygons.first.points}");
               });
             } else {
               for (final polygon in polygons) {
-                print(
-                    "this is the poly id ${polygon.polygonId.value} and points ${polygons.last.points}");
+                // print(
+                //     "this is the poly id ${polygon.polygonId.value} and points ${polygons.last.points}");
                 if (polygon.polygonId != item['id']) {
-                  // Todo () make it on title
                   setState(() {
                     polygonsTemp.add(Polygon(
                       polygonId: PolygonId(item['id'].toString()),
@@ -312,10 +310,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                 fillColor: Colors.blue.withOpacity(0.5),
                 strokeColor: Colors.blue,
               ));
-              print('added circle and this is the id ${circles.last.circleId}');
+              // print('added circle and this is the id ${circles.last.circleId}');
             });
           }
         }
+        print(dangerZoneDataList);
       } else {
         print(response.body);
         throw 'Problem with the get request';
@@ -403,9 +402,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           ),
           IconButton(onPressed: saveData, icon: Icon(Icons.save_alt)),
           IconButton(onPressed: loadData, icon: Icon(Icons.upload)),
-
         ],
-
         backgroundColor: Colors.red,
         title: const Text('Danger Zone'),
       ),
@@ -443,8 +440,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> clear(BuildContext context) async {
-    setState(()  {
-
+    setState(() {
       historyList = [];
       notificationMSG = '';
       polygons.clear();
