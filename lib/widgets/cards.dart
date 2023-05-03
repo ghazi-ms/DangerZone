@@ -37,18 +37,32 @@ class _CardsState extends State<Cards> {
 
       for (var dataListObject in widget.dataList) {
         print('id in data list ${dataListObject['id']}');
-        if (dataListObject['id'].toString() == element['id'].toString()) {
-          print(element['position'].toString());
-          matchedList.insert(0,{
-            'title': dataListObject['title'],
-            'description': dataListObject['description'],
-            'timeStamp': dataListObject['timeStamp'],
-            'id': element['id'].toString(),
-            'position': element['position'].toString(),
-          });
+        if (dataListObject['id'].toString() == element['id'].toString() ) {
+
+          // Check if the ID already exists in matchedList
+          bool idExists = false;
+          for (var matchedObject in matchedList) {
+            if (matchedObject['id'] == element['id'].toString()) {
+              idExists = true;
+              break;
+            }
+          }
+
+          if (!idExists) {
+            matchedList.insert(0,{
+              'title': dataListObject['title'],
+              'description': dataListObject['description'],
+              'timeStamp': dataListObject['timeStamp'],
+              'id': element['id'].toString(),
+              'position': element['position'].toString(),
+            });
+          } else {
+            print("Duplicate ID found: ${element['id'].toString()}");
+          }
         }
       }
     }
+
 
     return matchedList.isNotEmpty
         ? SizedBox(
