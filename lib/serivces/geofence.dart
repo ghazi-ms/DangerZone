@@ -37,18 +37,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   final distanceFilter = 50;
 
   Future<void> saveData() async {
-    print("saving history list");
+    print("saving");
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String jsonString = json.encode(historyList);
     print(jsonString);
     print(await prefs.setString('listItems', jsonString));
-
-    //Danger List Dynamic Save
-    print("Saving Danger List");
-    SharedPreferences prefsDangerList = await SharedPreferences.getInstance();
-
-    List<String> serializedList = dangerZoneDataList.map((item) => json.encode(item)).toList();
-    print(await prefsDangerList.setStringList('listItemsDanger', serializedList));
 
   }
 
@@ -68,28 +61,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         });
       } else {
         print('No data found in SharedPreferences');
-      }
-    } else {
-      print('SharedPreferences instance is null');
-    }
-
-    //Danger List Dynamic
-    print("Loading Danger Zone List");
-
-    SharedPreferences? prefsDangerList = await SharedPreferences.getInstance();
-
-    if (prefsDangerList != null) {
-      String? jsonString = prefs.getString('listItemsDanger');
-      if (jsonString != null) {
-        List<dynamic> jsonList = jsonDecode(jsonString);
-        List<List<dynamic>> dataList =
-        jsonList.map((json) => List<dynamic>.from(json)).toList();
-        print(dataList);
-        setState(() {
-          dangerZoneDataList = dataList.toList();
-        });
-      } else {
-        print('No data found in SharedPreferences for danger List');
       }
     } else {
       print('SharedPreferences instance is null');
