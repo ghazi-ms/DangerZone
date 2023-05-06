@@ -35,6 +35,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   Set<Polygon> polygons = {};
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
+  static const int tolerance = 100;
 
   Future<void> saveData() async {
     print("saving");
@@ -158,7 +159,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         circle.center.latitude,
         circle.center.longitude,
       );
-      if (distance <= 100) {
+      if (distance <= tolerance) {
         if (!historyList
             .any((element) => element['id'] == circle.circleId.value)) {
           setState(() {
@@ -184,7 +185,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           positionLatLng, polygonLatLngs, true);
 
       bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
-          positionLatLng, polygonLatLngs, tolerance: 100, true);
+          positionLatLng, polygonLatLngs, tolerance: tolerance, true);
 
       if ((isInsidePolygon == false && allowedDistance == true) ||
           isInsidePolygon == true) {

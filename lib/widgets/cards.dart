@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-
 import 'package:updated_grad/widgets/NewsCards.dart';
 
 class Cards extends StatefulWidget {
