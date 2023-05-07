@@ -59,7 +59,7 @@ class _NewsCardsState extends State<NewsCards> {
                 colors: [
                   Color(0xFFFF7043), // deep orange
                   Color(0xFFE57373), // light red
-                  Color(0xFFB71C1C), // dark red
+                  Color(0xD0DE2222), // dark red
                   Color(0xFF1565C0), // blue
                   Color(0xFF42A5F5), // light blue
                   // Color(0xFFE0F7FA), // pale blue
@@ -140,13 +140,7 @@ class _NewsCardsState extends State<NewsCards> {
                   ),
                 ),
               ),
-              trailing: IconButton(
-                  iconSize: 60,
 
-                  icon: const Icon(Icons.remove,color: Colors.white,),
-                  onPressed: (){print("clicked");},
-
-                )
 
             ),
           ),
