@@ -1,31 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'serivces/geofence.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
-
-Future<void> backgroundHandler(RemoteMessage message) async {
-  print("This is message form background");
-  print(message.notification?.title);
-  print(message.notification?.body);
-}
-
-void backgroundFetchHeadlessTask() async {
-  // Your code to run in the background goes here
-  print("This works fine");
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(backgroundHandler);
 
   runApp(MyApp());
-
 }
+
 class MyApp extends StatelessWidget {
-
-
-    @override
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: GeofenceMap(),

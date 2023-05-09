@@ -27,6 +27,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  device_info_plus: ^8.2.2
   location: ^4.4.0
   google_maps_flutter: ^2.1.1
   geolocator: ^7.0.3
@@ -35,6 +36,7 @@ dependencies:
   flutter_local_notifications: ^13.0.0
   firebase_messaging: ^14.2.6
   cloud_firestore: ^4.4.4
+  firebase_core: ^2.11.0
   maps_launcher: ^2.2.0
   http: any
   intl: any

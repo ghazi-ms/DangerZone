@@ -15,28 +15,23 @@ class NewsCards extends StatefulWidget {
 
   final String title;
   final String timestamp;
-  final String coordinate ;
+  final String coordinate;
   final String description;
   final String id;
 
   @override
   State<NewsCards> createState() => _NewsCardsState();
-
 }
 
 class _NewsCardsState extends State<NewsCards> {
   bool isExpanded = false;
 
   Future<void> reDirectToMaps(String coordinates) async {
-
     MapsLauncher.launchQuery(coordinates);
   }
 
   @override
   Widget build(BuildContext context) {
-
-
-
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.only(top: 10),
@@ -68,38 +63,9 @@ class _NewsCardsState extends State<NewsCards> {
                 end: Alignment.bottomRight,
               ),
             ),
-            //new color
-            // decoration: BoxDecoration(
-            //   borderRadius: BorderRadius.circular(40),
-            //   gradient: const LinearGradient(
-            //     colors: [
-            //       Colors.red,
-            //       Color(0xFFFFA07A), // light salmon
-            //       Colors.redAccent,
-            //       Color(0xFFFFC0CB), // pink
-            //     ],
-            //     begin: Alignment.topLeft,
-            //     end: Alignment.bottomRight,
-            //   ),
-            // ),
-            // decoration: BoxDecoration(
-            //   borderRadius: BorderRadius.circular(40),
-            //   gradient: const LinearGradient(
-            //     colors: [
-            //       Color(0xFFCE3C3C), // Red
-            //       Color(0xFFEE5484), // Pink
-            //       Color(0xFF942020), // Red
-            //     ],
-            //     stops: [0, 0.4, 1],
-            //     begin: Alignment.topLeft,
-            //     end: Alignment.bottomRight,
-            //   ),
-            // ),
             child: ListTile(
-              contentPadding: const EdgeInsets.only(top: 10,bottom: 40),
-
-              leading:
-              SizedBox(
+              contentPadding: const EdgeInsets.only(top: 10, bottom: 40),
+              leading: SizedBox(
                 child: IconButton(
                   iconSize: 80,
                   onPressed: () {
@@ -112,7 +78,6 @@ class _NewsCardsState extends State<NewsCards> {
                   ),
                 ),
               ),
-
               title: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.center,
@@ -140,15 +105,10 @@ class _NewsCardsState extends State<NewsCards> {
                   ),
                 ),
               ),
-
-
             ),
           ),
         ),
       ),
-
     );
-
   }
 }
-
