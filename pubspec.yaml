@@ -27,7 +27,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  device_info_plus: ^8.2.2
+  platform_device_id: ^1.0.1
   location: ^4.4.0
   google_maps_flutter: ^2.1.1
   geolocator: ^7.0.3

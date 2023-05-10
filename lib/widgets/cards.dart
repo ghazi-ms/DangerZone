@@ -1,14 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:updated_grad/widgets/NewsCards.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 
 class Cards extends StatefulWidget {
   List<Map<String, String>> historyList = [];
   List<dynamic> dataList = [''];
-
-  Cards(this.historyList, this.dataList, {Key? key}) : super(key: key);
-
+  String? deviceId;
+  Cards(this.historyList, this.dataList, this.deviceId, {Key? key})
+      : super(key: key);
   @override
   State<Cards> createState() => _CardsState();
 }
@@ -16,14 +15,6 @@ class Cards extends StatefulWidget {
 class _CardsState extends State<Cards> {
   bool isExpanded = false;
   List<Map<String, dynamic>> matchedList = [];
-  Future<void> DeviceInfo() async {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-    print('Running on ${androidInfo.id}'); // e.g. "Moto G (4)"
-
-    // IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-    // print('Running on ${iosInfo.utsname.machine}'); // e.g. "iPod7,1"
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,70 +24,135 @@ class _CardsState extends State<Cards> {
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final buttonBarHeight = MediaQuery.of(context).padding.bottom;
     final screenHeight =
-        RawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight -28;
+        RawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight - 28;
 
-    DeviceInfo();
     CollectionReference collectionReference =
         FirebaseFirestore.instance.collection('dangerZones');
-    print(collectionReference.doc().toString());
-    for (var element in widget.historyList) {
-      print("id in history ${element['id'].toString()}");
 
-      for (var dataListObject in widget.dataList) {
-        print('id in data list ${dataListObject['id']}');
-        if (dataListObject['id'].toString() == element['id'].toString()) {
-          // Check if the ID already exists in matchedList
+    //---------------
 
-          String targetId =
-              dataListObject['id'].toString(); // the ID you want to check
+// Get a reference to the dangerZones collection
+//     var dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
+//
+//     // Add the dangerZoneList subcollection with some sample data
+//     dangerZonesRef
+//         .doc(widget.deviceId.toString())
+//         .collection('dangerZoneList')
+//         .add({
+//       "name": 'Zone A',
+//       "latitude": 40.7128,
+//       'longitude': -74.0060,
+//       "radius": 100
+//     });
+//
+//     // Add the historyList subcollection with some sample data
+//     dangerZonesRef
+//         .doc(widget.deviceId.toString())
+//         .collection('historyList')
+//         .add({"date": 123213, "message": 'Entered Zone A'});
+//
+//     // Add the geoList subcollection with some sample data
+//     dangerZonesRef
+//       ..doc(widget.deviceId.toString()).collection('geoList').add({
+//         "latitude": 40.7128,
+//         "longitude": -74.0060,
+//         "timestamp": 123213,
+//       });
 
-          FirebaseFirestore.instance
-              .collection('dangerZones')
-              .get()
-              .then((QuerySnapshot querySnapshot) {
-            bool idExists = false;
-            querySnapshot.docs.forEach((doc) {
-              if (doc['id'] == targetId) {
-                idExists = true;
-              }
-            });
-            if (idExists) {
-              print('$targetId exists in at least one document');
-            } else {
-              collectionReference.add({
-                'title': dataListObject['title'],
-                'description': dataListObject['description'],
-                'timeStamp': dataListObject['timeStamp'],
-                'id': element['id'].toString(),
-                'position': element['position'].toString(),
-              });
-            }
-          }).catchError((error) => print('Error getting documents: $error'));
-        }
-      }
-    }
+    //-------------
+    //
+    // for (var element in widget.historyList) {
+    //   print("id in history ${element['id'].toString()}");
+    //
+    //   for (var dataListObject in widget.dataList) {
+    //     print('id in data list ${dataListObject['id']}');
+    //     if (dataListObject['id'].toString() == element['id'].toString()) {
+    //       // Check if the ID already exists in matchedList
+    //
+    //       String targetId =
+    //           dataListObject['id'].toString(); // the ID you want to check
+    //
+    //       FirebaseFirestore.instance
+    //           .collection('dangerZones')
+    //           .get()
+    //           .then((QuerySnapshot querySnapshot) {
+    //         bool idExists = false;
+    //         querySnapshot.docs.forEach((doc) {
+    //           if (doc['id'] == targetId) {
+    //             idExists = true;
+    //           }
+    //         });
+    //         if (idExists) {
+    //           print('$targetId exists in at least one document');
+    //         } else {
+    //           collectionReference.add({
+    //             'deviceId': widget.deviceId.toString(),
+    //             'title': dataListObject['title'],
+    //             'description': dataListObject['description'],
+    //             'timeStamp': dataListObject['timeStamp'],
+    //             'id': element['id'].toString(),
+    //             'position': element['position'].toString(),
+    //           });
+    //         }
+    //       }).catchError((error) => print('Error getting documents: $error'));
+    //     }
+    //   }
+    // }
     return SizedBox(
       height: screenHeight,
       width: screenWidth,
       child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('dangerZones')
+            .doc(widget.deviceId)
+            .collection('historyList')
             .snapshots(),
-        builder:
-            (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasData) {
-            print("data "+snapshot.data.toString());
-            return ListView.builder(
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (BuildContext context, int index) {
-                var dangerZone = snapshot.data!.docs[index].data() as Map;
-                return NewsCards(
-                  title: dangerZone['title'],
-                  description: dangerZone['description'],
-                  timestamp: dangerZone['timeStamp'],
-                  coordinate: dangerZone['position'],
-                  id: dangerZone['id'],
-                );
+        builder: (BuildContext context,
+            AsyncSnapshot<QuerySnapshot> historySnapshot) {
+          if (historySnapshot.hasData) {
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('dangerZones')
+                  .doc(widget.deviceId)
+                  .collection('dangerZonesData')
+                  .snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> dangerZonesSnapshot) {
+                if (dangerZonesSnapshot.hasData) {
+                  List<Map<String, dynamic>> dangerZonesList =
+                      dangerZonesSnapshot.data!.docs
+                          .map((doc) => doc.data() as Map<String, dynamic>)
+                          .toList();
+
+                  List<Map<String, dynamic>> historyList = historySnapshot
+                      .data!.docs
+                      .map((doc) => doc.data() as Map<String, dynamic>)
+                      .toList();
+
+                  // Filter the danger zones list to only include those that have a matching ID in the history list
+                  dangerZonesList = dangerZonesList
+                      .where((dangerZone) => historyList
+                          .any((history) => history['id'] == dangerZone['id']))
+                      .toList();
+
+                  return ListView.builder(
+                    itemCount: dangerZonesList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      var dangerZone = dangerZonesList[index];
+                      return NewsCards(
+                        title: dangerZone['title'].toString(),
+                        description: dangerZone['description'].toString(),
+                        timestamp: dangerZone['timeStamp'].toString(),
+                        coordinate: dangerZone['position'].toString(),
+                        id: dangerZone['id'].toString(),
+                      );
+                    },
+                  );
+                } else {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
               },
             );
           } else {
@@ -107,153 +163,5 @@ class _CardsState extends State<Cards> {
         },
       ),
     );
-
-
   }
 }
-
-//
-// ListView.builder(
-// itemBuilder: (ctx, index) {
-// return Card(
-// child: InkWell(
-// onTap: () {
-// print("Tap");
-// },
-// child: Row(
-// crossAxisAlignment: CrossAxisAlignment.start,
-// mainAxisAlignment: MainAxisAlignment.center,
-// children: [
-// Expanded(
-// flex: 1,
-// child: Center(
-// heightFactor: 1.7,
-// child: IconButton(
-// alignment: Alignment.center,
-//
-// iconSize: 50,
-// onPressed: (){reDirectToMaps(MatchedList[index]['Coordinates']);},
-// icon: Icon(Icons.map),
-// ),
-// )
-// ),
-// Expanded(
-// flex: 3,
-// child: Padding(
-// padding: const EdgeInsets.all(8.0),
-// child: Column(
-// crossAxisAlignment: CrossAxisAlignment.start,
-// children: [
-// Text(
-// MatchedList[index]['title'],
-// style: TextStyle(
-// fontSize: 18,
-// fontWeight: FontWeight.bold,
-// ),
-// ),
-// SizedBox(height: 4),
-// Text(
-// '${MatchedList[index]['timeStamp']}',
-// style: TextStyle(
-// color: Colors.grey[600],
-// ),
-// ),
-// SizedBox(height: 8),
-// isExpanded
-// ? Text(MatchedList[index]['description'])
-//     : Text(
-// MatchedList[index]['description'],
-// maxLines: 3,
-// overflow: TextOverflow.ellipsis,
-// ),
-// SizedBox(height: 8),
-// GestureDetector(
-// onTap: () {
-// setState(() {
-// isExpanded = !isExpanded;
-// });
-// },
-// child: isExpanded ? Text('Read less') : Text('Read more'),
-// ),
-// ],
-// ),
-// ),
-// ),
-// ],
-// ),
-// ),
-// );
-//
-// },
-// itemCount: MatchedList.length,
-// ),
-
-//befooore
-// Card(
-// child: InkWell(
-// onTap: () {
-// print("Tap");
-// },
-// child: Row(
-// crossAxisAlignment: CrossAxisAlignment.start,
-// mainAxisAlignment: MainAxisAlignment.center,
-// children: [
-// Expanded(
-// flex: 1,
-// child: Center(
-// heightFactor: 1.7,
-// child: IconButton(
-// alignment: Alignment.center,
-//
-// iconSize: 50,
-// onPressed: (){},
-// icon: Icon(Icons.map),
-// ),
-// )
-// ),
-// Expanded(
-// flex: 3,
-// child: Padding(
-// padding: const EdgeInsets.all(8.0),
-// child: Column(
-// crossAxisAlignment: CrossAxisAlignment.start,
-// children: [
-// Text(
-// widget.title,
-// style: TextStyle(
-// fontSize: 18,
-// fontWeight: FontWeight.bold,
-// ),
-// ),
-// SizedBox(height: 4),
-// Text(
-// 'By ${widget.author} | ${widget.date}',
-// style: TextStyle(
-// color: Colors.grey[600],
-// ),
-// ),
-// SizedBox(height: 8),
-// isExpanded
-// ? Text(widget.summary)
-//     : Text(
-// widget.summary,
-// maxLines: 3,
-// overflow: TextOverflow.ellipsis,
-// ),
-// SizedBox(height: 8),
-// GestureDetector(
-// onTap: () {
-// setState(() {
-// isExpanded = !isExpanded;
-// });
-// },
-// child: isExpanded ? Text('Read less') : Text('Read more'),
-// ),
-// ],
-// ),
-// ),
-// ),
-// ],
-// ),
-// ),
-// );
