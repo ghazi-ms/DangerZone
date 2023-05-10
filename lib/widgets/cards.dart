@@ -27,9 +27,18 @@ class _CardsState extends State<Cards> {
 
   @override
   Widget build(BuildContext context) {
+    final RawScreenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final appBarHeight = AppBar().preferredSize.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final buttonBarHeight = MediaQuery.of(context).padding.bottom;
+    final screenHeight =
+        RawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight -28;
+
     DeviceInfo();
     CollectionReference collectionReference =
         FirebaseFirestore.instance.collection('dangerZones');
+    print(collectionReference.doc().toString());
     for (var element in widget.historyList) {
       print("id in history ${element['id'].toString()}");
 
@@ -66,35 +75,40 @@ class _CardsState extends State<Cards> {
         }
       }
     }
-    return Expanded(
-      child: Column(
-        children: [
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('dangerZones')
-                .snapshots(),
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              return Expanded(
-                child: ListView.builder(
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    var dangerZone = snapshot.data!.docs[index].data() as Map;
-                    return NewsCards(
-                      title: dangerZone['title'],
-                      description: dangerZone['description'],
-                      timestamp: dangerZone['timeStamp'],
-                      coordinate: dangerZone['position'],
-                      id: dangerZone['id'],
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        ],
+    return SizedBox(
+      height: screenHeight,
+      width: screenWidth,
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('dangerZones')
+            .snapshots(),
+        builder:
+            (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasData) {
+            print("data "+snapshot.data.toString());
+            return ListView.builder(
+              itemCount: snapshot.data!.docs.length,
+              itemBuilder: (BuildContext context, int index) {
+                var dangerZone = snapshot.data!.docs[index].data() as Map;
+                return NewsCards(
+                  title: dangerZone['title'],
+                  description: dangerZone['description'],
+                  timestamp: dangerZone['timeStamp'],
+                  coordinate: dangerZone['position'],
+                  id: dangerZone['id'],
+                );
+              },
+            );
+          } else {
+            return const Center(
+              child: Text("you are safe"),
+            );
+          }
+        },
       ),
     );
+
+
   }
 }
 

@@ -63,6 +63,33 @@ class _NewsCardsState extends State<NewsCards> {
                 end: Alignment.bottomRight,
               ),
             ),
+            //new color
+            // decoration: BoxDecoration(
+            //   borderRadius: BorderRadius.circular(40),
+            //   gradient: const LinearGradient(
+            //     colors: [
+            //       Colors.red,
+            //       Color(0xFFFFA07A), // light salmon
+            //       Colors.redAccent,
+            //       Color(0xFFFFC0CB), // pink
+            //     ],
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //   ),
+            // ),
+            // decoration: BoxDecoration(
+            //   borderRadius: BorderRadius.circular(40),
+            //   gradient: const LinearGradient(
+            //     colors: [
+            //       Color(0xFFCE3C3C), // Red
+            //       Color(0xFFEE5484), // Pink
+            //       Color(0xFF942020), // Red
+            //     ],
+            //     stops: [0, 0.4, 1],
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //   ),
+            // ),
             child: ListTile(
               contentPadding: const EdgeInsets.only(top: 10, bottom: 40),
               leading: SizedBox(
@@ -105,6 +132,8 @@ class _NewsCardsState extends State<NewsCards> {
                   ),
                 ),
               ),
+
+
             ),
           ),
         ),

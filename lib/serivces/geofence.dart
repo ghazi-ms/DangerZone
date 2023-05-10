@@ -14,6 +14,8 @@ import 'package:updated_grad/local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
+import 'package:numberpicker/numberpicker.dart';
+
 
 class GeofenceMap extends StatefulWidget {
   const GeofenceMap({super.key});
@@ -24,19 +26,18 @@ class GeofenceMap extends StatefulWidget {
 
 List<Map<String, String>> historyList = [];
 
-List<dynamic> dangerZoneDataList = [''];
+List<dynamic> dangerGeofences = [''];
+final List<dynamic> dangerZonesData = [];
 
 class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   late LatLng center;
-  Set<Circle> circles = {};
-  Set<Polygon> polygons = {};
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
   static const int tolerance = 100;
-
+  int Minutes=15;
   late Timer _timerServer;
   late Timer _timerList;
 
@@ -69,9 +70,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     // clear newsfeed list
     deleteAllDocuments('dangerZones');
     historyList.clear();
-    circles.clear();
-    polygons.clear();
-    dangerZoneDataList.clear();
+    dangerGeofences.clear();
+    dangerZonesData.clear();
   }
 
   void cancelTimerList() {
@@ -92,32 +92,12 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   Future<void> saveData() async {
     print("saving");
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String jsonString = json.encode(historyList);
-    print(jsonString);
-    print(await prefs.setString('listItems', jsonString));
+   //firebase save all lists
   }
 
   Future<void> loadData() async {
     print("loading");
-    SharedPreferences? prefs = await SharedPreferences.getInstance();
-
-    if (prefs != null) {
-      String? jsonString = prefs.getString('listItems');
-      if (jsonString != null) {
-        List<dynamic> jsonList = jsonDecode(jsonString);
-        List<Map<String, String>> mapList =
-            jsonList.map((json) => Map<String, String>.from(json)).toList();
-        print(mapList);
-        setState(() {
-          historyList = mapList.toList();
-        });
-      } else {
-        print('No data found in SharedPreferences');
-      }
-    } else {
-      print('SharedPreferences instance is null');
-    }
+    //firebase load all lists
   }
 
   @override
@@ -198,55 +178,58 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
-    // print(' $currentLatitude, $currentLongitude');
-    // Check if the position is inside the circle
-    for (Circle circle in circles) {
-      double distance = Geolocator.distanceBetween(
-        currentLatitude,
-        currentLongitude,
-        circle.center.latitude,
-        circle.center.longitude,
-      );
-      if (distance <= tolerance) {
-        if (!historyList
-            .any((element) => element['id'] == circle.circleId.value)) {
-          setState(() {
-            historyList.add({
-              'id': circle.circleId.value,
-              'position': '$currentLatitude,$currentLongitude'.toString()
+    for (var dangerElement in dangerGeofences) {
+      if (dangerElement.runtimeType == Circle) {
+        Circle cir = dangerElement;
+        double distance = Geolocator.distanceBetween(
+          currentLatitude,
+          currentLongitude,
+          cir.center.latitude,
+          cir.center.longitude,
+        );
+        if (distance <= 100) {
+          if (!historyList
+              .any((element) => element['id'] == cir.circleId.value)) {
+            setState(() {
+              historyList.add({
+                'id': cir.circleId.value,
+                'position': '$currentLatitude,$currentLongitude'.toString()
+              });
             });
-          });
+          }
+          return true;
         }
-        return true;
       }
-    }
+      // Check if the position is inside the polygon
+      if (dangerElement.runtimeType == Polygon) {
+        Polygon Poly = dangerElement;
+        List<maps_toolkit.LatLng> polygonLatLngs = Poly.points
+            .map(
+                (point) => maps_toolkit.LatLng(point.latitude, point.longitude)
+        )
+            .toList();
+        maps_toolkit.LatLng positionLatLng =
+            maps_toolkit.LatLng(currentLatitude, currentLongitude);
 
-    // Check if the position is inside the polygon
-    for (Polygon polygon in polygons) {
-      List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
-          .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
-          .toList();
-      maps_toolkit.LatLng positionLatLng =
-          maps_toolkit.LatLng(currentLatitude, currentLongitude);
+        bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
+            positionLatLng, polygonLatLngs, true);
 
-      bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
-          positionLatLng, polygonLatLngs, true);
+        bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
+            positionLatLng, polygonLatLngs, tolerance: tolerance, true);
 
-      bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
-          positionLatLng, polygonLatLngs, tolerance: tolerance, true);
-
-      if ((isInsidePolygon == false && allowedDistance == true) ||
-          isInsidePolygon == true) {
-        if (!historyList
-            .any((element) => element['id'] == polygon.polygonId.value)) {
-          setState(() {
-            historyList.add({
-              'id': polygon.polygonId.value,
-              'position': '$currentLatitude,$currentLongitude'.toString()
+        if ((isInsidePolygon == false && allowedDistance == true) ||
+            isInsidePolygon == true) {
+          if (!historyList
+              .any((element) => element['id'] == Poly.polygonId.value)) {
+            setState(() {
+              historyList.add({
+                'id': Poly.polygonId.value,
+                'position': '$currentLatitude,$currentLongitude'.toString()
+              });
             });
-          });
+          }
+          return true;
         }
-        return true;
       }
     }
     return false;
@@ -258,85 +241,95 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       const SnackBar(content: Text('Getting new danger zones')),
     );
 
-    const apiEndpoint = 'http://192.168.1.21:5000/';
+    const apiEndpoint = "http://192.168.0.107:5000";
+    // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
     try {
       final response = await get(Uri.parse(apiEndpoint));
       final data = json.decode(response.body);
-
+      dangerZonesData.addAll(data);
       if (response.statusCode == 200) {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Data Received !')),
         );
-        setState(() {
-          dangerZoneDataList = data;
-        });
-
-        final polygonsTemp = <Polygon>{};
-
-        for (final item in dangerZoneDataList) {
+        for (final item in data) {
           final coordinates = item['Coordinates'];
-          // print(coordinates);
-          final points = <LatLng>[];
-          // print('$item----$coordinates');
-
-          if (coordinates.length > 2) {
-            for (final co in coordinates) {
-              final lat = double.parse(co[0].toString());
-              final lng = double.parse(co[1].toString());
-              points.add(LatLng(lat, lng));
-            }
-            // print(points.toString());
-            print('id is: ${item['id']} name: ${item['title']}');
-            if (polygons.isEmpty) {
-              setState(() {
-                polygons.add(Polygon(
-                  polygonId: PolygonId(item['id'].toString()),
-                  points: points.toList(),
-                  fillColor: Colors.blue.withOpacity(0.5),
-                  strokeColor: Colors.blue,
-                ));
-                print(
-                    "this is the poly id ${polygons.first.polygonId.value} and points ${polygons.first.points}");
-              });
-            } else {
-              for (final polygon in polygons) {
-                print(
-                    "this is the poly id ${polygon.polygonId.value} and points ${polygons.last.points}");
-                if (polygon.polygonId != item['id']) {
-                  // Todo () make it on title
-                  setState(() {
-                    polygonsTemp.add(Polygon(
-                      polygonId: PolygonId(item['id'].toString()),
-                      points: points.toList(),
-                      fillColor: Colors.blue.withOpacity(0.5),
-                      strokeColor: Colors.blue,
-                    ));
-                  });
-                } else {
-                  print('already there');
-                }
+          print('id is: ${item['id']} name: ${item['title']}');
+          if (dangerGeofences.isEmpty) {
+            if (coordinates.length > 2) {
+              final points = <LatLng>[];
+              for (final co in coordinates) {
+                final lat = double.parse(co[0].toString());
+                final lng = double.parse(co[1].toString());
+                points.add(LatLng(lat, lng));
               }
-              polygons.addAll(polygonsTemp);
-            }
-
-            points.clear();
-          } else {
-            setState(() {
-              circles.add(Circle(
+              Polygon tempPolygon = Polygon(
+                polygonId: PolygonId(item['id'].toString()),
+                points: points.toList(),
+                fillColor: Colors.blue.withOpacity(0.5),
+                strokeColor: Colors.blue,
+              );
+              setState(() {
+                dangerGeofences.add(tempPolygon);
+              });
+              points.clear();
+            } else {
+              Circle tempCircle = Circle(
                 circleId: CircleId(item['id'].toString()),
                 center: LatLng(double.parse(coordinates.first[0].toString()),
                     double.parse(coordinates.first[1].toString())),
                 radius: 100,
                 fillColor: Colors.blue.withOpacity(0.5),
                 strokeColor: Colors.blue,
-              ));
-              print('added circle and this is the id ${circles.last.circleId}');
-            });
+              );
+              setState(() {
+                dangerGeofences.add(tempCircle);
+              });
+            }
+          } else {
+            if (coordinates.length > 2) {
+              final points = <LatLng>[];
+
+              //polygons
+              for (final co in coordinates) {
+                final lat = double.parse(co[0].toString());
+                final lng = double.parse(co[1].toString());
+                points.add(LatLng(lat, lng));
+              }
+              Polygon tempPolygon = Polygon(
+                polygonId: PolygonId(item['id'].toString()),
+                points: points.toList(),
+                fillColor: Colors.blue.withOpacity(0.5),
+                strokeColor: Colors.blue,
+              );
+
+              if (!dangerGeofences.contains(tempPolygon)) {
+                setState(() {
+                  dangerGeofences.add(tempPolygon);
+                });
+              }
+
+              points.clear();
+            } else {
+              //circle
+              Circle tempCircle = Circle(
+                circleId: CircleId(item['id'].toString()),
+                center: LatLng(double.parse(coordinates.first[0].toString()),
+                    double.parse(coordinates.first[1].toString())),
+                radius: 100,
+                fillColor: Colors.blue.withOpacity(0.5),
+                strokeColor: Colors.blue,
+              );
+              if (!dangerGeofences.contains(tempCircle)) {
+                setState(() {
+                  dangerGeofences.add(tempCircle);
+                });
+              }
+            }
           }
         }
       } else {
-        print(response.body);
+        print("asdasasdaszd" + response.body);
         throw 'Problem with the get request';
       }
     } catch (e) {
@@ -344,9 +337,18 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       if (e.toString() == 'Connection closed while receiving data') {
         await fetchDangerZones();
       }
+    } finally {
+      print('done');
+      print("danger llist ");
+      // dangerZoneDataList.forEach((element) {
+      //   if (element.runtimeType==Circle) {
+      //     print(element.circleId);
+      //   }if (element.runtimeType==Polygon) {
+      //     print(element.polygonId);
+      //   }
+      //
+      // });
     }
-
-    print('done');
   }
 
   void _onEnterGeofence() {
@@ -369,12 +371,12 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   void getList() {
-    for (Polygon p in polygons) {
-      print(" pol id ${p.polygonId} and points ${p.points.length}");
-    }
-    for (Circle c in circles) {
-      print('circle id ${c.circleId} and points ${c.center}');
-    }
+    dangerZonesData.forEach((element) {
+      print(element);
+    });
+    dangerGeofences.forEach((element) {
+      print(element);
+    });
     if (historyList.isEmpty) print("empty history");
     for (var item in historyList) {
       print("the id is ${item['id']} and the position is ${item['position']}");
@@ -416,6 +418,49 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               },
             ),
           ),
+
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Change When to check for new news',
+            onPressed: () async {
+              int? selectedMinutes = await showDialog<int>(
+                context: context,
+                builder: (BuildContext context) {
+
+                  return AlertDialog(
+                    title: Text('Select Minutes'),
+                    content: NumberPicker(
+                      value: Minutes,
+                      minValue: 1,
+                      maxValue: 60,
+                      onChanged: (newValue) {
+                        setState(() {
+                          Minutes=newValue;
+                        });
+                      } ,
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('OK'),
+                        onPressed: () {
+                          Navigator.of(context).pop(Minutes);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+              if (selectedMinutes != null) {
+                // do something with selectedMinutes
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.update),
             onPressed: () => getList(),
@@ -426,27 +471,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         backgroundColor: Colors.red,
         title: const Text('Danger Zone'),
       ),
-      body: historyList.isEmpty
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Center(
-                    child: Text(
-                  "You are Safe ! \n you didn't enter any danger zones",
-                  style: TextStyle(
-                    fontSize: 25,
-                  ),
-                  textAlign: TextAlign.center,
-                ))
-              ],
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Cards(historyList, dangerZoneDataList),
-              ],
-            ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Cards(historyList, dangerZonesData),
+        ],
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Align(
         alignment: Alignment.bottomRight,
@@ -461,10 +493,10 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   Future<void> clear(BuildContext context) async {
     setState(() {
-      historyList = [];
+      historyList.clear();
       notificationMSG = '';
-      polygons.clear();
-      circles.clear();
+      dangerGeofences.clear();
+      dangerZonesData.clear();
     });
     // SharedPreferences prefs = await SharedPreferences.getInstance();
     // prefs.clear();
