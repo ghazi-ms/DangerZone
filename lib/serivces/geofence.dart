@@ -14,7 +14,6 @@ import 'package:updated_grad/local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:numberpicker/numberpicker.dart';
 
 class GeofenceMap extends StatefulWidget {
@@ -183,8 +182,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
-    double latitude;
-    double longitude;
     dangerZonesRef
         .doc(deviceId.toString())
         .collection('circles')
