@@ -182,6 +182,67 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
+    //saving to history list
+    /*
+    for (var geofence in dangerGeofences) {
+      // Check if the position is inside a circle geofence
+      if (geofence is Circle) {
+        Circle circle = geofence;
+        double distanceToCenter = Geolocator.distanceBetween(
+          latitude,
+          longitude,
+          circle.center.latitude,
+          circle.center.longitude,
+        );
+        if (distanceToCenter <= circle.radius) {
+          // Record the geofence entry in the history list
+          if (!historyList
+              .any((entry) => entry['id'] == circle.circleId.value)) {
+            setState(() {
+              historyList.add({
+                'id': circle.circleId.value,
+                'position': '$latitude,$longitude'.toString()
+              });
+            });
+          }
+          return true;
+        }
+      }
+      // Check if the position is inside a polygon geofence
+      else if (geofence is Polygon) {
+        Polygon polygon = geofence;
+        List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
+            .map(
+                (point) => maps_toolkit.LatLng(point.latitude, point.longitude))
+            .toList();
+        maps_toolkit.LatLng positionLatLng =
+        maps_toolkit.LatLng(latitude, longitude);
+
+        bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
+            positionLatLng, polygonLatLngs, true);
+
+        bool isCloseToEdge = maps_toolkit.PolygonUtil.isLocationOnEdge(
+            positionLatLng, polygonLatLngs, tolerance: tolerance, true);
+
+        if ((isInsidePolygon == false && isCloseToEdge == true) ||
+            isInsidePolygon == true) {
+          // Record the geofence entry in the history list
+          if (!historyList
+              .any((entry) => entry['id'] == polygon.polygonId.value)) {
+            setState(() {
+              historyList.add({
+                'id': polygon.polygonId.value,
+                'position': '$latitude,$longitude'.toString()
+              });
+            });
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+    */
+    /*
     dangerZonesRef
         .doc(deviceId.toString())
         .collection('circles')
@@ -276,6 +337,21 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
 
     return false;
+     */
+    return false; //Placeholder
+  }
+//From Database
+  Future<void> loadDataToListFromBase() async {
+
+    QuerySnapshot querySnapshot =
+    await dangerZonesRef.doc(deviceId.toString()).collection('dangerZones').doc(deviceId.toString())
+        .collection('historyList').get();
+    querySnapshot.docs.forEach((doc) {
+      String data = doc.data().toString();
+      historyList.add(data as Map<String, String>);
+    });
+
+    print("Loading to List ${historyList}");
   }
 
   Future<void> fetchDangerZones() async {
