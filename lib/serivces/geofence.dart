@@ -41,6 +41,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   int Minutes = 15;
   late Timer _timerServer;
   late Timer _timerList;
+  Set<Circle> circles = {};
+  Set<Polygon> polygons = {};
 
   void startTimerServer() {
     const SecondsServer = const Duration(minutes: 15);
@@ -242,7 +244,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     }
     return false;
     */
-    /*
+
     dangerZonesRef
         .doc(deviceId.toString())
         .collection('circles')
@@ -274,20 +276,15 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                   .doc(deviceId.toString())
                   .collection('historyList')
                   .add({
-                'title': doc['title'].toString(),
                 'id': doc['circleId'].toString(),
-                'currentLatitude': currentLatitude.toString(),
-                'currentLongitude': currentLongitude.toString(),
-                'type': 'circle',
+                 'position':currentLatitude.toString()+currentLongitude.toString(),
               });
             }
           }).catchError((error) => print('Error getting documents: $error'));
         }
       }
     });
-
     // return true;
-
     dangerZonesRef
         .doc(deviceId.toString())
         .collection('polygons')
@@ -337,21 +334,90 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
 
     return false;
-     */
+
     return false; //Placeholder
   }
+
 //From Database
   Future<void> loadDataToListFromBase() async {
-
-    QuerySnapshot querySnapshot =
-    await dangerZonesRef.doc(deviceId.toString()).collection('dangerZones').doc(deviceId.toString())
-        .collection('historyList').get();
-    querySnapshot.docs.forEach((doc) {
-      String data = doc.data().toString();
-      historyList.add(data as Map<String, String>);
+    QuerySnapshot querySnapshot ;
+    querySnapshot= await dangerZonesRef
+        .doc(deviceId)
+        .collection('historyList')
+        .get();
+    querySnapshot.docs.forEach((element) {
+      Map x = element.data() as Map;
+      historyList.add({'id': x['id'], 'position': x['position']});
     });
-
     print("Loading to List ${historyList}");
+    querySnapshot = await dangerZonesRef
+        .doc(deviceId)
+        .collection('dangerZonesData')
+        .get();
+    querySnapshot.docs.forEach((element) {
+      Map x = element.data() as Map;
+      dangerZonesData.add({
+        'id':x['id'],
+        'title':x['title'],
+        'Coordinates':x['Coordinates'],
+        'Locations':x['Locations'],
+        'timeStamp':x['timeStamp'],
+        'description':x['description'],
+      });
+    });
+    querySnapshot = await dangerZonesRef
+        .doc(deviceId)
+        .collection('circles')
+        .get();
+    querySnapshot.docs.forEach((element) {
+      print(element.data());
+      Map x = element.data() as Map;
+      List<dynamic> center = jsonDecode(x['center']);
+      List<List<double>> coordinatesList =
+      center.map((coord) => List<double>.from(coord)).toList();
+      double latitude = coordinatesList[0][0];
+      double longitude = coordinatesList[0][1];
+      Circle tempCircle = Circle(
+        circleId: CircleId(x['circleId'].toString()),
+        center: LatLng(latitude, longitude),
+        radius: double.parse(x['radius'].toString()),
+      );
+      setState(() {
+        circles.add(tempCircle);
+      });
+    });
+    querySnapshot = await dangerZonesRef
+        .doc(deviceId)
+        .collection('polygons')
+        .get();
+    querySnapshot.docs.forEach((element) {
+      Map x = element.data() as Map;
+      List<dynamic> coordinates = jsonDecode(x['coordinates']);
+      List<LatLng> latLngList = coordinates.map((coord) => LatLng(
+        coord[0] as double, // latitude
+        coord[1] as double, // longitude
+      )).toList();
+
+      Polygon temppoly = Polygon(
+        polygonId: PolygonId(x['polygonId']),
+        points: latLngList,
+      );
+      setState(() {
+        polygons.add(temppoly);
+      });
+    });
+    polygons.forEach((element) {
+      print(element.polygonId);
+    });
+    circles.forEach((element) {
+      print(element);
+    });
+    historyList.forEach((element) {
+      print(element.toString());
+    });
+    dangerZonesData.forEach((element) {
+      print(element);
+    });
   }
 
   Future<void> fetchDangerZones() async {
@@ -360,7 +426,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       const SnackBar(content: Text('Getting new danger zones')),
     );
 
-    const apiEndpoint = "http://192.168.1.21:5000";
+    const apiEndpoint = "http://192.168.0.108:5000";
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
     try {
@@ -413,9 +479,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                   .doc(deviceId.toString())
                   .collection('polygons')
                   .add({
-                'title': data[i]['title'].toString(),
                 'polygonId': data[i]['id'].toString(),
                 'coordinates': data[i]['Coordinates'].toString(),
+
               });
             }
           }).catchError((error) => print('Error getting documents: $error'));
@@ -437,10 +503,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                   .doc(deviceId.toString())
                   .collection('circles')
                   .add({
-                'title': data[i]['title'].toString(),
                 'circleId': data[i]['id'].toString(),
                 'center': coordinates.toString(),
-                'radius': 100,
+                'radius': '100',
               });
             }
           }).catchError((error) => print('Error getting documents: $error'));
@@ -466,6 +531,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       print('done');
       print("danger llist ");
     }
+    //Todo() call the save lists function and return to usuall
   }
 
   void _onEnterGeofence() {
@@ -580,7 +646,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             icon: const Icon(Icons.update),
             onPressed: () => getList(),
           ),
-          IconButton(onPressed: saveData, icon: Icon(Icons.save_alt)),
+          IconButton(
+              onPressed: loadDataToListFromBase, icon: Icon(Icons.save_alt)),
           IconButton(onPressed: loadData, icon: Icon(Icons.upload)),
         ],
         backgroundColor: Colors.red,
