@@ -88,8 +88,12 @@ class _CardsState extends State<Cards> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: const [
         Center(
-          child: Text("You're safe !\nyou haven't entered any danger zones",style: TextStyle(fontSize: 24,),),
-        )
+          child: Text(
+            "You're safe !\nyou haven't entered any danger zones",
+            style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ],
     );
   }
