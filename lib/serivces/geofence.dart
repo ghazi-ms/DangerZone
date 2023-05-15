@@ -121,6 +121,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     super.initState();
     DeviceInfo();
     saveData();
+    loadDataToListFromBase();
     WidgetsBinding.instance.addObserver(this);
     startTimerList();
     loadData().then((_) {
@@ -184,15 +185,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
-    //saving to history list
     /*
     for (var geofence in dangerGeofences) {
       // Check if the position is inside a circle geofence
       if (geofence is Circle) {
         Circle circle = geofence;
         double distanceToCenter = Geolocator.distanceBetween(
-          latitude,
-          longitude,
+          currentLatitude,
+          currentLongitude,
           circle.center.latitude,
           circle.center.longitude,
         );
@@ -203,7 +203,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             setState(() {
               historyList.add({
                 'id': circle.circleId.value,
-                'position': '$latitude,$longitude'.toString()
+                'position': '$currentLatitude,$currentLongitude'.toString()
               });
             });
           }
@@ -218,7 +218,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                 (point) => maps_toolkit.LatLng(point.latitude, point.longitude))
             .toList();
         maps_toolkit.LatLng positionLatLng =
-        maps_toolkit.LatLng(latitude, longitude);
+        maps_toolkit.LatLng(currentLatitude, currentLongitude);
 
         bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
             positionLatLng, polygonLatLngs, true);
@@ -234,7 +234,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             setState(() {
               historyList.add({
                 'id': polygon.polygonId.value,
-                'position': '$latitude,$longitude'.toString()
+                'position': '$currentLatitude,$currentLongitude'.toString()
               });
             });
           }
@@ -244,180 +244,187 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     }
     return false;
     */
-
-    dangerZonesRef
-        .doc(deviceId.toString())
-        .collection('circles')
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      for (var doc in querySnapshot.docs) {
-        List<dynamic> center = jsonDecode(doc['center']);
-        List<List<double>> coordinatesList =
-            center.map((coord) => List<double>.from(coord)).toList();
-        double latitude = coordinatesList[0][0];
-        double longitude = coordinatesList[0][1];
-
-        double distance = Geolocator.distanceBetween(
-          currentLatitude,
-          currentLongitude,
-          latitude,
-          longitude,
-        );
-
-        if (distance <= 100) {
-          dangerZonesRef
-              .doc(deviceId.toString())
-              .collection('historyList')
-              .where('id', isEqualTo: doc['circleId'].toString())
-              .get()
-              .then((QuerySnapshot querySnapshot) {
-            if (querySnapshot.docs.isEmpty) {
-              dangerZonesRef
-                  .doc(deviceId.toString())
-                  .collection('historyList')
-                  .add({
-                'id': doc['circleId'].toString(),
-                 'position':currentLatitude.toString()+currentLongitude.toString(),
-              });
-            }
-          }).catchError((error) => print('Error getting documents: $error'));
+    
+    for (Circle circle in circles) {
+      double distance = Geolocator.distanceBetween(
+        currentLatitude,
+        currentLongitude,
+        circle.center.latitude,
+        circle.center.longitude,
+      );
+       if (distance <= tolerance) {
+        if (!historyList
+            .any((element) => element['id'] == circle.circleId.value)) {
+          setState(() {
+            historyList.add({
+              'id': circle.circleId.value,
+              'position': '$currentLatitude,$currentLongitude'.toString()
+            });
+          });
         }
+        return true;
       }
-    });
-    // return true;
-    dangerZonesRef
-        .doc(deviceId.toString())
-        .collection('polygons')
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      for (var doc in querySnapshot.docs) {
-        List<dynamic> coordinates = jsonDecode(doc['coordinates']);
+    }
 
-        List<maps_toolkit.LatLng> polygonLatLngs = coordinates.map((point) {
-          double latitude = point[0];
-          double longitude = point[1];
-          return maps_toolkit.LatLng(latitude, longitude);
-        }).toList();
+    // Check if the position is inside the polygon
+    for (Polygon polygon in polygons) {
+      List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
+          .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
+          .toList();
+      maps_toolkit.LatLng positionLatLng =
+          maps_toolkit.LatLng(currentLatitude, currentLongitude);
 
-        maps_toolkit.LatLng positionLatLng =
-            maps_toolkit.LatLng(currentLatitude, currentLongitude);
+      bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
+          positionLatLng, polygonLatLngs, true);
 
-        bool isInsidePolygon = maps_toolkit.PolygonUtil.containsLocation(
-            positionLatLng, polygonLatLngs, true);
+      bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
 
-        bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
-            positionLatLng, polygonLatLngs, tolerance: tolerance, true);
+          positionLatLng, polygonLatLngs, tolerance: tolerance, true);
 
-        if ((isInsidePolygon == false && allowedDistance == true) ||
-            isInsidePolygon == true) {
-          dangerZonesRef
-              .doc(deviceId.toString())
-              .collection('historyList')
-              .where('id', isEqualTo: doc['polygonId'].toString())
-              .get()
-              .then((QuerySnapshot querySnapshot) {
-            if (querySnapshot.docs.isEmpty) {
-              dangerZonesRef
-                  .doc(deviceId.toString())
-                  .collection('historyList')
-                  .add({
-                'title': doc['title'].toString(),
-                'id': doc['polygonId'].toString(),
-                'currentLatitude': currentLatitude.toString(),
-                'currentLongitude': currentLongitude.toString(),
-                'type': 'polygon',
-              });
-            }
-          }).catchError((error) => print('Error getting documents: $error'));
+      if ((isInsidePolygon == false && allowedDistance == true) ||
+          isInsidePolygon == true) {
+        if (!historyList
+            .any((element) => element['id'] == polygon.polygonId.value)) {
+          setState(() {
+            historyList.add({
+              'id': polygon.polygonId.value,
+              'position': '$currentLatitude,$currentLongitude'.toString()
+            });
+          });
         }
+        return true;
       }
-    });
-
+    }
     return false;
-
-    return false; //Placeholder
   }
 
+  ///For debugging and checking the list for duplicates from the database
+  void checkListInAnotherFunction(){
+    print("History list after getting data from database: ${historyList}");
+    print("Danger Zone Data after getting data from database:");
+    dangerZonesData.forEach((element) {
+      print(element['id']);
+    });
+    print("Circle List check ===> ");
+    circles.forEach((element) {
+      print(element.circleId);
+    });
+    print("Polygon List check ==>");
+
+    polygons.forEach((element) {
+      print(element.polygonId);
+    });
+  }
+  ///Danger and history list Id check for duplicates
+  bool checkListsforDuplicates(List<dynamic> list, dynamic id) {
+    for (var item in list) {
+      if (item['id'] == id) {
+        return true;
+      }
+    }
+    return false;
+  }
+  ///Circle ID check for duplicates
+  bool checkDuplicatesCircle(Set<Circle> set, dynamic id) {
+    for (var item in set) {
+      if (item.circleId == id) {
+        return true;
+      }
+    }
+    return false;
+  }
+  ///Polygon ID check for duplicates
+  bool checkDuplicatesPolygon(Set<Polygon> set, dynamic id) {
+    for (var item in set) {
+      if (item.polygonId == id) {
+        return true;
+      }
+    }
+    return false;
+  }
 //From Database
   Future<void> loadDataToListFromBase() async {
+
     QuerySnapshot querySnapshot ;
     querySnapshot= await dangerZonesRef
-        .doc(deviceId)
+        .doc("10e2c5ff201428c8")
         .collection('historyList')
         .get();
+    //Data checks if it contains duplicates
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      historyList.add({'id': x['id'], 'position': x['position']});
+      if (!checkListsforDuplicates(historyList, x['id'])) {
+        historyList.add({'id': x['id'], 'position': x['position']});
+      }
     });
-    print("Loading to List ${historyList}");
     querySnapshot = await dangerZonesRef
-        .doc(deviceId)
+        .doc("10e2c5ff201428c8")
         .collection('dangerZonesData')
         .get();
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      dangerZonesData.add({
-        'id':x['id'],
-        'title':x['title'],
-        'Coordinates':x['Coordinates'],
-        'Locations':x['Locations'],
-        'timeStamp':x['timeStamp'],
-        'description':x['description'],
-      });
+      if (!checkListsforDuplicates(dangerZonesData, x['id'])) {
+        dangerZonesData.add({
+          'Coordinates': x['Coordinates'],
+          'Locations': x['Locations'],
+          'description': x['description'],
+          'id': x['id'],
+          'timeStamp': x['timeStamp'],
+          'title': x['title'],
+        });
+      }
     });
+
     querySnapshot = await dangerZonesRef
-        .doc(deviceId)
+        .doc("10e2c5ff201428c8")
         .collection('circles')
         .get();
     querySnapshot.docs.forEach((element) {
       print(element.data());
       Map x = element.data() as Map;
-      List<dynamic> center = jsonDecode(x['center']);
-      List<List<double>> coordinatesList =
-      center.map((coord) => List<double>.from(coord)).toList();
-      double latitude = coordinatesList[0][0];
-      double longitude = coordinatesList[0][1];
-      Circle tempCircle = Circle(
-        circleId: CircleId(x['circleId'].toString()),
-        center: LatLng(latitude, longitude),
-        radius: double.parse(x['radius'].toString()),
-      );
-      setState(() {
-        circles.add(tempCircle);
-      });
+      if (!checkDuplicatesCircle(circles, x['circleId'])) {
+
+        List<dynamic> center = jsonDecode(x['center']);
+        List<List<double>> coordinatesList =
+        center.map((coord) => List<double>.from(coord)).toList();
+        double latitude = coordinatesList[0][0];
+        double longitude = coordinatesList[0][1];
+        Circle tempCircle = Circle(
+          circleId: CircleId(x['circleId'].toString()),
+          center: LatLng(latitude, longitude),
+          radius: double.parse(x['radius'].toString()),
+        );
+        setState(() {
+          circles.add(tempCircle);
+        });
+
+      }
     });
     querySnapshot = await dangerZonesRef
-        .doc(deviceId)
+        .doc("10e2c5ff201428c8")
         .collection('polygons')
         .get();
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      List<dynamic> coordinates = jsonDecode(x['coordinates']);
-      List<LatLng> latLngList = coordinates.map((coord) => LatLng(
-        coord[0] as double, // latitude
-        coord[1] as double, // longitude
-      )).toList();
+      if (!checkDuplicatesPolygon(polygons, x['polygonId'])) {
 
-      Polygon temppoly = Polygon(
-        polygonId: PolygonId(x['polygonId']),
-        points: latLngList,
-      );
-      setState(() {
-        polygons.add(temppoly);
-      });
+        List<dynamic> coordinates = jsonDecode(x['coordinates']);
+        List<LatLng> latLngList = coordinates.map((coord) =>
+            LatLng(
+              coord[0] as double, // latitude
+              coord[1] as double, // longitude
+            )).toList();
+
+        Polygon temppoly = Polygon(
+          polygonId: PolygonId(x['polygonId']),
+          points: latLngList,
+        );
+        setState(() {
+          polygons.add(temppoly);
+        });
+      }
     });
-    polygons.forEach((element) {
-      print(element.polygonId);
-    });
-    circles.forEach((element) {
-      print(element);
-    });
-    historyList.forEach((element) {
-      print(element.toString());
-    });
-    dangerZonesData.forEach((element) {
-      print(element);
-    });
+
   }
 
   Future<void> fetchDangerZones() async {
@@ -649,6 +656,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           IconButton(
               onPressed: loadDataToListFromBase, icon: Icon(Icons.save_alt)),
           IconButton(onPressed: loadData, icon: Icon(Icons.upload)),
+          IconButton(onPressed: checkListInAnotherFunction, icon: Icon(Icons.abc_sharp)), //To check the 4 lists if there any duplicates (Just testing bro:) }
         ],
         backgroundColor: Colors.red,
         title: const Text('Danger Zone'),
