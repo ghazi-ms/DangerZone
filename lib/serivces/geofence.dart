@@ -347,7 +347,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     QuerySnapshot querySnapshot ;
     querySnapshot= await dangerZonesRef
-        .doc("10e2c5ff201428c8")
+        .doc(deviceId)
         .collection('historyList')
         .get();
     //Data checks if it contains duplicates
@@ -358,7 +358,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       }
     });
     querySnapshot = await dangerZonesRef
-        .doc("10e2c5ff201428c8")
+        .doc(deviceId)
         .collection('dangerZonesData')
         .get();
     querySnapshot.docs.forEach((element) {
@@ -376,7 +376,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
 
     querySnapshot = await dangerZonesRef
-        .doc("10e2c5ff201428c8")
+        .doc(deviceId)
         .collection('circles')
         .get();
     querySnapshot.docs.forEach((element) {
@@ -401,13 +401,12 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       }
     });
     querySnapshot = await dangerZonesRef
-        .doc("10e2c5ff201428c8")
+        .doc(deviceId)
         .collection('polygons')
         .get();
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
       if (!checkDuplicatesPolygon(polygons, x['polygonId'])) {
-
         List<dynamic> coordinates = jsonDecode(x['coordinates']);
         List<LatLng> latLngList = coordinates.map((coord) =>
             LatLng(
@@ -433,110 +432,111 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       const SnackBar(content: Text('Getting new danger zones')),
     );
 
-    const apiEndpoint = "http://192.168.0.108:5000";
+    const apiEndpoint = "http://172.20.10.6:5000";
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
+    final response = await get(Uri.parse(apiEndpoint));
+    if (response.statusCode == 200) {
+      try {
 
-    try {
-      final response = await get(Uri.parse(apiEndpoint));
-      final data = json.decode(response.body);
-      dangerZonesData.addAll(data);
-      print(data[0]['id']);
-      for (int i = 0; i < data.length; i++) {
-        // dangerZonesData to firebase
-        dangerZonesRef
-            .doc(deviceId.toString())
-            .collection('dangerZonesData')
-            .get()
-            .then((QuerySnapshot querySnapshot) {
-          bool idExists = false;
-          querySnapshot.docs.forEach((doc) {
-            if (doc['id'].toString() == data[i]['id'].toString()) {
-              idExists = true;
+        final data = json.decode(response.body);
+        dangerZonesData.addAll(data);
+        print(data[0]['id']);
+        for (int i = 0; i < data.length; i++) {
+          // dangerZonesData to firebase
+          dangerZonesRef
+              .doc(deviceId.toString())
+              .collection('dangerZonesData')
+              .get()
+              .then((QuerySnapshot querySnapshot) {
+            bool idExists = false;
+            querySnapshot.docs.forEach((doc) {
+              if (doc['id'].toString() == data[i]['id'].toString()) {
+                idExists = true;
+              }
+            });
+            if (!idExists) {
+              dangerZonesRef
+                  .doc(deviceId.toString())
+                  .collection('dangerZonesData')
+                  .add({
+                'Coordinates': data[i]['Coordinates'].toString(),
+                'title': data[i]['title'].toString(),
+                'description': data[i]['description'].toString(),
+                'id': data[i]['id'].toString(),
+                'timeStamp': data[i]['timeStamp'].toString(),
+                'Locations': data[i]['Locations'].toString()
+              });
             }
-          });
-          if (!idExists) {
+          }).catchError((error) => print('Error getting documents: $error'));
+
+          if (data[i]['Coordinates'].length > 2) {
             dangerZonesRef
                 .doc(deviceId.toString())
-                .collection('dangerZonesData')
-                .add({
-              'Coordinates': data[i]['Coordinates'].toString(),
-              'title': data[i]['title'].toString(),
-              'description': data[i]['description'].toString(),
-              'id': data[i]['id'].toString(),
-              'timeStamp': data[i]['timeStamp'].toString(),
-              'Locations': data[i]['Locations'].toString()
-            });
+                .collection('polygons')
+                .get()
+                .then((QuerySnapshot querySnapshot) {
+              bool idExists = false;
+              querySnapshot.docs.forEach((doc) {
+                if (doc['polygonId'].toString() == data[i]['id'].toString()) {
+                  idExists = true;
+                }
+              });
+              if (!idExists) {
+                dangerZonesRef
+                    .doc(deviceId.toString())
+                    .collection('polygons')
+                    .add({
+                  'polygonId': data[i]['id'].toString(),
+                  'coordinates': data[i]['Coordinates'].toString(),
+
+                });
+              }
+            }).catchError((error) => print('Error getting documents: $error'));
+          } else {
+            dangerZonesRef
+                .doc(deviceId.toString())
+                .collection('circles')
+                .get()
+                .then((QuerySnapshot querySnapshot) {
+              bool idExists = false;
+              querySnapshot.docs.forEach((doc) {
+                if (doc['circleId'].toString() == data[i]['id'].toString()) {
+                  idExists = true;
+                }
+              });
+              if (!idExists) {
+                final List<dynamic> coordinates = data[i]['Coordinates'];
+                dangerZonesRef
+                    .doc(deviceId.toString())
+                    .collection('circles')
+                    .add({
+                  'circleId': data[i]['id'].toString(),
+                  'center': coordinates.toString(),
+                  'radius': '100',
+                });
+              }
+            }).catchError((error) => print('Error getting documents: $error'));
           }
-        }).catchError((error) => print('Error getting documents: $error'));
-
-        if (data[i]['Coordinates'].length > 2) {
-          dangerZonesRef
-              .doc(deviceId.toString())
-              .collection('polygons')
-              .get()
-              .then((QuerySnapshot querySnapshot) {
-            bool idExists = false;
-            querySnapshot.docs.forEach((doc) {
-              if (doc['polygonId'].toString() == data[i]['id'].toString()) {
-                idExists = true;
-              }
-            });
-            if (!idExists) {
-              dangerZonesRef
-                  .doc(deviceId.toString())
-                  .collection('polygons')
-                  .add({
-                'polygonId': data[i]['id'].toString(),
-                'coordinates': data[i]['Coordinates'].toString(),
-
-              });
-            }
-          }).catchError((error) => print('Error getting documents: $error'));
-        } else {
-          dangerZonesRef
-              .doc(deviceId.toString())
-              .collection('circles')
-              .get()
-              .then((QuerySnapshot querySnapshot) {
-            bool idExists = false;
-            querySnapshot.docs.forEach((doc) {
-              if (doc['circleId'].toString() == data[i]['id'].toString()) {
-                idExists = true;
-              }
-            });
-            if (!idExists) {
-              final List<dynamic> coordinates = data[i]['Coordinates'];
-              dangerZonesRef
-                  .doc(deviceId.toString())
-                  .collection('circles')
-                  .add({
-                'circleId': data[i]['id'].toString(),
-                'center': coordinates.toString(),
-                'radius': '100',
-              });
-            }
-          }).catchError((error) => print('Error getting documents: $error'));
         }
-      }
 
-      //------------------------------------------------------------------
+        //------------------------------------------------------------------
 
-      if (response.statusCode == 200) {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('Data Received !')),
-        );
-      } else {
-        print(response.body);
-        throw 'Problem with the get request';
+
+      } catch (e) {
+        print('$e error');
+        if (e.toString() == 'Connection closed while receiving data') {
+          await fetchDangerZones();
+        }
+      } finally {
+        print('done');
+        print("danger llist ");
       }
-    } catch (e) {
-      print('$e error');
-      if (e.toString() == 'Connection closed while receiving data') {
-        await fetchDangerZones();
-      }
-    } finally {
-      print('done');
-      print("danger llist ");
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Data Received !')),
+      );
+    } else {
+      print(response.body);
+      throw 'Problem with the get request';
     }
     //Todo() call the save lists function and return to usuall
   }
@@ -664,7 +664,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Cards(historyList, dangerZonesData, deviceId),
         ],
