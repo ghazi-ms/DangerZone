@@ -534,6 +534,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       scaffoldMessenger.showSnackBar(
         const SnackBar(content: Text('Data Received !')),
       );
+      loadDataToListFromBase();
     } else {
       print(response.body);
       throw 'Problem with the get request';
