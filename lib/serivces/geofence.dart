@@ -497,17 +497,20 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       Map x = element.data() as Map;
       if (!checkDuplicatesCircle(circles, x['circleId'])) {
         List<dynamic> center = jsonDecode(x['center']);
-        List<List<double>> coordinatesList =
-            center.map((coord) => List<double>.from(coord)).toList();
-        double latitude = coordinatesList[0][0];
-        double longitude = coordinatesList[0][1];
+        double latitude = double.parse(center[0].toString());
+        double longitude = double.parse(center[1].toString());
         Circle tempCircle = Circle(
           circleId: CircleId(x['circleId'].toString()),
           center: LatLng(latitude, longitude),
           radius: double.parse(x['radius'].toString()),
         );
         setState(() {
-          circles.add(tempCircle);
+          if (!circles.contains(tempCircle)) {
+            circles.add(tempCircle);
+
+          }  else {
+            print("dup c");
+          }
         });
       }
     });
@@ -529,7 +532,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           points: latLngList,
         );
         setState(() {
-          polygons.add(temppoly);
+          if (!polygons.contains(temppoly)) {
+            polygons.add(temppoly);
+          }  else {
+            print("dup");
+          }
         });
       }
     });
@@ -541,7 +548,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       const SnackBar(content: Text('Getting new danger zones')),
     );
 
-    const apiEndpoint = "http://192.168.0.108:5000";
+    // const apiEndpoint = "http://192.168.0.108:5000";
+    const apiEndpoint = "http://172.22.101.16:5000";
+
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
     try {
