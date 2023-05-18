@@ -14,7 +14,9 @@ import 'package:updated_grad/local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
-import 'package:numberpicker/numberpicker.dart';
+import 'package:number_selection/number_selection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class GeofenceMap extends StatefulWidget {
   const GeofenceMap({super.key});
@@ -45,13 +47,47 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   Set<Polygon> polygons = {};
 
   void startTimerServer() {
-    const SecondsServer = const Duration(minutes: 15);
-    _timerServer = new Timer.periodic(
+    print("after $Minutes");
+    var SecondsServer = Duration(minutes: Minutes);
+    _timerServer = Timer.periodic(
       SecondsServer,
-      (Timer timer) => callServerFunction(),
+          (Timer timer) => callServerFunction(),
     );
   }
 
+  Future<void> saveData() async {
+    var prefs = await SharedPreferences.getInstance();
+    prefs.remove("Minutes");
+    prefs.setInt("Minutes", Minutes);
+    print("saved $Minutes");
+
+  }
+
+  Future<void> loadData(BuildContext context) async {
+    try {
+      var prefs = await SharedPreferences.getInstance();
+      if (prefs.getInt("Minutes") != null) {
+        setState(() {
+          Minutes = prefs.getInt("Minutes")!;
+
+        });
+      } else {
+        print("Null");
+        setState(() {
+          Minutes = 15;
+        });
+      }
+       var snackBar = SnackBar(
+        content: Text('loaded $Minutes'),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      print("loaded $Minutes");
+    } catch (e) {
+
+      print("Error loading data: $e");
+    }
+  }
   void callServerFunction() {
     // Perform network request
     fetchDangerZones();
@@ -118,6 +154,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    loadData(context);
     DeviceInfo();
     dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
     WidgetsBinding.instance.addObserver(this);
@@ -271,10 +308,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           .then((QuerySnapshot querySnapshot) {
         final existingIds = Set<String>.from(
             querySnapshot.docs.map((doc) => doc['id'].toString()));
-        print("existing id $existingIds");
-        print("current id ${dangerZonesData[i]['id']}");
-        print("contains or not ${existingIds
-                .contains(dangerZonesData[i]['id'].toString())}");
+
         if (existingIds.lookup(dangerZonesData[i]['id'].toString()) == null) {
           dangerZonesRef
               .doc(deviceId.toString())
@@ -663,6 +697,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       print("cicle "+element.circleId.value.toString());
       // print(element.center.toJson().toString());
     });
+    print("Minutes is $Minutes");
     if (historyList.isEmpty) print("empty history");
     for (var item in historyList) {
       print("the id is ${item['id']} and the position is ${item['position']}");
@@ -708,41 +743,54 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             icon: const Icon(Icons.settings),
             tooltip: 'Change When to check for new news',
             onPressed: () async {
-              int? selectedMinutes = await showDialog<int>(
+              await showDialog<void>(
                 context: context,
                 builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: Text('Select Minutes'),
-                    content: NumberPicker(
-                      value: Minutes,
-                      minValue: 1,
-                      maxValue: 60,
-                      onChanged: (newValue) {
-                        setState(() {
-                          Minutes = newValue;
-                        });
-                      },
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                  return SimpleDialog(
+                    title: const Text('change fetching time'),
+                    children: <Widget>[
+                      Container(
+
+                        alignment: Alignment.center,
+                        width:200,
+                        height: 70,
+                        child: NumberSelection(
+                          theme: NumberSelectionTheme(
+                              draggableCircleColor: Colors.pinkAccent,
+                              iconsColor: Colors.white,
+                              numberColor: Colors.white,
+                              backgroundColor: Colors.red,
+                              outOfConstraintsColor: Colors.deepOrange),
+                          initialValue: Minutes,
+                          minValue: 1,
+                          maxValue: 60,
+                          direction: Axis.horizontal,
+                          withSpring: true,
+                          onChanged: (int value){
+                            Minutes = value;
+
+                          },
+                          enableOnOutOfConstraintsAnimation: true,
+                          onOutOfConstraints: () =>
+                              print("This value is too high or too low"),
+                        ),
                       ),
                       TextButton(
-                        child: const Text('OK'),
-                        onPressed: () {
-                          Navigator.of(context).pop(Minutes);
-                        },
-                      ),
+                          onPressed: () {
+                            saveData();
+                            print(Minutes);
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text(
+                            "Done",
+                            style: TextStyle(
+                              fontSize: 25,
+                            ),
+                          ))
                     ],
                   );
                 },
               );
-              if (selectedMinutes != null) {
-                // do something with selectedMinutes
-              }
             },
           ),
           IconButton(
