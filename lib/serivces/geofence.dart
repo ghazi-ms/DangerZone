@@ -572,7 +572,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     try {
       final response =
           await get(Uri.parse(apiEndpoint)).timeout(const Duration(minutes: 2));
-      final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
         scaffoldMessenger.showSnackBar(
