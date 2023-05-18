@@ -16,6 +16,7 @@ import '../notification_service.dart';
 import '../widgets/cards.dart';
 import 'package:number_selection/number_selection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class GeofenceMap extends StatefulWidget {
   const GeofenceMap({super.key});
@@ -147,7 +148,102 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     deviceId = await PlatformDeviceId.getDeviceId;
     print(deviceId);
   }
+  bool isTimestampBeforeTwentyFourHours(dynamic timestamp, DateTime twentyFourHoursAgo) {
+    if (timestamp is String) {
+      // Convert the timestamp string to a DateTime object
+      final dateFormat = DateFormat("MM/dd/yyyy, HH:mm:ss");
+      final timestampDateTime = dateFormat.parse(timestamp);
 
+      // Compare the timestamp with the twentyFourHoursAgo parameter
+      return timestampDateTime.isBefore(twentyFourHoursAgo);
+    } else if (timestamp is Timestamp) {
+      // Compare the Firestore Timestamp directly with the twentyFourHoursAgo parameter
+      return timestamp.toDate().isBefore(twentyFourHoursAgo);
+    }
+
+    // Add additional checks for other timestamp formats if needed
+
+    // Return false if the timestamp format is unsupported or invalid
+    return false;
+  }
+  // Function to delete documents within all collections based on a specific ID and timestamp
+  Future<void> deleteDocuments() async {
+    final firestore = FirebaseFirestore.instance;
+    final currentTime = DateTime.now();
+    final twentyFourHoursAgo = currentTime.subtract(Duration(hours: 24));
+
+    // Query documents within the 'dangerZonesData' collection
+    final querySnapshot = await firestore
+        .collection('dangerZones')
+        .doc(deviceId)
+        .collection('dangerZonesData')
+        .get();
+
+    // Iterate through each document
+    for (final doc in querySnapshot.docs) {
+      final id = doc['id'];
+      final timestamp = doc['timeStamp'];
+
+      // Convert timestamp to DateTime object if needed
+
+      // Check if the timestamp is before 24 hours ago
+      if (isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo))  {
+        // Delete documents within the 'circles' collection
+        print('delete $id in $timestamp');
+
+        await firestore
+            .collection('dangerZones')
+            .doc(deviceId)
+            .collection('circles')
+            .where('circleId', isEqualTo: id)
+            .get()
+            .then((snapshot) {
+          for (final doc in snapshot.docs) {
+            doc.reference.delete();
+          }
+        });
+
+        // Delete documents within the 'dangerZonesData' collection
+        await firestore
+            .collection('dangerZones')
+            .doc(deviceId)
+            .collection('dangerZonesData')
+            .where('id', isEqualTo: id)
+            .get()
+            .then((snapshot) {
+          for (final doc in snapshot.docs) {
+            doc.reference.delete();
+          }
+        });
+
+        // Delete documents within the 'historyList' collection
+        await firestore
+            .collection('dangerZones')
+            .doc(deviceId)
+            .collection('historyList')
+            .where('id', isEqualTo: id)
+            .get()
+            .then((snapshot) {
+          for (final doc in snapshot.docs) {
+            doc.reference.delete();
+          }
+        });
+
+        // Delete documents within the 'polygons' collection
+        await firestore
+            .collection('dangerZones')
+            .doc(deviceId)
+            .collection('polygons')
+            .where('polygonId', isEqualTo: id)
+            .get()
+            .then((snapshot) {
+          for (final doc in snapshot.docs) {
+            doc.reference.delete();
+          }
+        });
+      }
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -812,9 +908,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               onPressed: loadDataToListFromBase, icon: Icon(Icons.save_alt)),
           IconButton(onPressed: uploadToFirbase, icon: Icon(Icons.upload)),
           IconButton(
-              onPressed: checkListInAnotherFunction,
-              icon: Icon(Icons.abc_sharp)),
-          //To check the 4 lists if there any duplicates (Just testing bro:) }
+              onPressed: deleteDocuments,
+              icon: Icon(Icons.delete_sweep)),
+
         ],
         backgroundColor: Colors.red,
         title: const Text('Danger Zone'),
