@@ -17,6 +17,7 @@ import '../widgets/cards.dart';
 import 'package:number_selection/number_selection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
 class GeofenceMap extends StatefulWidget {
   const GeofenceMap({super.key});
 
@@ -50,7 +51,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     var SecondsServer = Duration(minutes: Minutes);
     _timerServer = Timer.periodic(
       SecondsServer,
-      (Timer timer) => callServerFunction(),
+          (Timer timer) => callServerFunction(),
     );
   }
 
@@ -59,6 +60,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     prefs.remove("Minutes");
     prefs.setInt("Minutes", Minutes);
     print("saved $Minutes");
+
   }
 
   Future<void> loadData(BuildContext context) async {
@@ -67,6 +69,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       if (prefs.getInt("Minutes") != null) {
         setState(() {
           Minutes = prefs.getInt("Minutes")!;
+
         });
       } else {
         print("Null");
@@ -74,17 +77,17 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           Minutes = 15;
         });
       }
-      var snackBar = SnackBar(
+       var snackBar = SnackBar(
         content: Text('loaded $Minutes'),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
       print("loaded $Minutes");
     } catch (e) {
+
       print("Error loading data: $e");
     }
   }
-
   void callServerFunction() {
     // Perform network request
     fetchDangerZones();
@@ -348,8 +351,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         for (var polygon in polygons) {
           print("existing id $existingPolygonIds");
           print("current id ${polygon.polygonId}");
-          print(
-              "contains or not ${existingPolygonIds.contains(polygon.polygonId.toString())}");
+          print("contains or not ${existingPolygonIds
+                  .contains(polygon.polygonId.toString())}");
           if (existingPolygonIds.lookup(polygon.polygonId.value.toString()) ==
               null) {
             List<String> coordinatesList = [];
@@ -435,15 +438,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   Future<void> loadDangerZonesData() async {
     QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
+    await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
 
     List<Map<String, dynamic>> newDangerZones = [];
 
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
 
-      bool found = dangerZonesData
-          .any((item) => item['id'].toString() == x['id'].toString());
+      bool found = dangerZonesData.any((item) => item['id'].toString() == x['id'].toString());
       print(found);
       if (!found) {
         newDangerZones.add({
@@ -462,17 +464,18 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
   }
 
+
+
   Future<void> loadCircles() async {
     QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('circles').get();
+    await dangerZonesRef.doc(deviceId).collection('circles').get();
 
     List<Circle> newCircles = [];
 
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
 
-      bool found = circles
-          .any((circle) => circle.circleId.value == x['circleId'].toString());
+      bool found = circles.any((circle) => circle.circleId.value == x['circleId'].toString());
 
       if (!found) {
         List<dynamic> center = jsonDecode(x['center']);
@@ -493,25 +496,25 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
   }
 
+
   Future<void> loadPolygons() async {
     QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('polygons').get();
+    await dangerZonesRef.doc(deviceId).collection('polygons').get();
 
     List<Polygon> newPolygons = [];
 
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
 
-      bool found = polygons.any(
-          (polygon) => polygon.polygonId.value == x['polygonId'].toString());
+      bool found = polygons.any((polygon) => polygon.polygonId.value == x['polygonId'].toString());
 
       if (!found) {
         List<dynamic> coordinates = jsonDecode(x['coordinates']);
         List<LatLng> latLngList = coordinates
             .map((coord) => LatLng(
-                  coord[0] as double, // latitude
-                  coord[1] as double, // longitude
-                ))
+          coord[0] as double, // latitude
+          coord[1] as double, // longitude
+        ))
             .toList();
 
         Polygon tempPoly = Polygon(
@@ -528,17 +531,17 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
   }
 
+
   Future<void> loadHistoryList() async {
     QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('historyList').get();
+    await dangerZonesRef.doc(deviceId).collection('historyList').get();
 
     List<Map<String, String>> newHistoryList = [];
 
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
 
-      bool found = historyList
-          .any((item) => item['id'].toString() == x['id'].toString());
+      bool found = historyList.any((item) => item['id'].toString() == x['id'].toString());
 
       if (!found) {
         newHistoryList.add({
@@ -557,6 +560,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
   }
 
+
   Future<void> fetchDangerZones() async {
     loadDataToListFromBase();
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -565,7 +569,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     );
 
     // const apiEndpoint = "http://192.168.0.108:5000";
-    const apiEndpoint = "http://192.168.1.21:5000";
+    const apiEndpoint = "http://192.168.0.111:5000";
 
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
@@ -577,27 +581,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Data Received !')),
         );
-        List<Map<String, dynamic>> data =
-            json.decode(response.body).cast<Map<String, dynamic>>();
-
-// Adding the data to dangerZonesData if the id doesn't exist already
-        data.forEach((Map<String, dynamic> newData) {
-          int id = newData['id'];
-
-          // Checking if the id already exists in dangerZonesData
-          bool idExists =
-              dangerZonesData.any((existingData) => existingData['id'] == id);
-
-          if (!idExists) {
-            dangerZonesData.add(newData);
-          }
-        });
-
-// Printing the updated dangerZonesData list
-        print(dangerZonesData);
-        /*setState(() {
+        setState(() {
           dangerZonesData.addAll(data);
-        });*/
+        });
 
         final polygonsTemp = <Polygon>{};
 
@@ -700,14 +686,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   void getList() {
     dangerZonesData.forEach((element) {
-      print("dang " + element['id'].toString());
+      print("dang "+element['id'].toString());
     });
     polygons.forEach((element) {
-      print("poly " + element.polygonId.value.toString());
+      print("poly "+element.polygonId.value.toString());
       // print(element.points.toList().first.toJson());
     });
     circles.forEach((element) {
-      print("cicle " + element.circleId.value.toString());
+      print("cicle "+element.circleId.value.toString());
       // print(element.center.toJson().toString());
     });
     print("Minutes is $Minutes");
@@ -763,8 +749,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                     title: const Text('change fetching time'),
                     children: <Widget>[
                       Container(
+
                         alignment: Alignment.center,
-                        width: 200,
+                        width:200,
                         height: 70,
                         child: NumberSelection(
                           theme: NumberSelectionTheme(
@@ -778,8 +765,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                           maxValue: 60,
                           direction: Axis.horizontal,
                           withSpring: true,
-                          onChanged: (int value) {
+                          onChanged: (int value){
                             Minutes = value;
+
                           },
                           enableOnOutOfConstraintsAnimation: true,
                           onOutOfConstraints: () =>
