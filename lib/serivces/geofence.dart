@@ -260,26 +260,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
   }
 
-  ///Circle ID check for duplicates
-  bool checkDuplicatesCircle(Set<Circle> set, dynamic id) {
-    for (var item in set) {
-      if (item.circleId == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  ///Polygon ID check for duplicates
-  bool checkDuplicatesPolygon(Set<Polygon> set, dynamic id) {
-    for (var item in set) {
-      if (item.polygonId == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   //to databasse
   Future<void> uploadToFirbase() async {
     print("called upload");
@@ -454,10 +434,16 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   Future<void> loadCircles() async {
     QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('circles').get();
+    await dangerZonesRef.doc(deviceId).collection('circles').get();
+
+    List<Circle> newCircles = [];
+
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      if (!checkDuplicatesCircle(circles, x['circleId'])) {
+
+      bool found = circles.any((circle) => circle.circleId.value == x['circleId'].toString());
+
+      if (!found) {
         List<dynamic> center = jsonDecode(x['center']);
         double latitude = double.parse(center[0].toString());
         double longitude = double.parse(center[1].toString());
@@ -466,46 +452,51 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           center: LatLng(latitude, longitude),
           radius: double.parse(x['radius'].toString()),
         );
-        setState(() {
-          if (!circles.contains(tempCircle)) {
-            circles.add(tempCircle);
-          } else {
-            print("dup c");
-          }
-        });
+
+        newCircles.add(tempCircle);
       }
+    });
+
+    setState(() {
+      circles.addAll(newCircles);
     });
   }
 
+
   Future<void> loadPolygons() async {
     QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('polygons').get();
+    await dangerZonesRef.doc(deviceId).collection('polygons').get();
+
+    List<Polygon> newPolygons = [];
+
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      if (!checkDuplicatesPolygon(polygons, x['polygonId'])) {
+
+      bool found = polygons.any((polygon) => polygon.polygonId.value == x['polygonId'].toString());
+
+      if (!found) {
         List<dynamic> coordinates = jsonDecode(x['coordinates']);
         List<LatLng> latLngList = coordinates
             .map((coord) => LatLng(
-                  coord[0] as double, // latitude
-                  coord[1] as double, // longitude
-                ))
+          coord[0] as double, // latitude
+          coord[1] as double, // longitude
+        ))
             .toList();
 
-        Polygon temppoly = Polygon(
+        Polygon tempPoly = Polygon(
           polygonId: PolygonId(x['polygonId']),
           points: latLngList,
         );
 
-        if (!polygons.contains(temppoly)) {
-          setState(() {
-            polygons.add(temppoly);
-          });
-        } else {
-          print("dup");
-        }
+        newPolygons.add(tempPoly);
       }
     });
+
+    setState(() {
+      polygons.addAll(newPolygons);
+    });
   }
+
 
   Future<void> loadHistoryList() async {
     QuerySnapshot querySnapshot =
