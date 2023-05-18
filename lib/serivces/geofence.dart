@@ -103,7 +103,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      loadDataToListFromBase();
+      // loadDataToListFromBase();
     }
     if (state == AppLifecycleState.paused) {
       uploadToFirbase();
@@ -137,15 +137,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     // background state
     FirebaseMessaging.onMessageOpenedApp.listen((event) {});
 
-
-
     fetchingLocation();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchDangerZones();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        loadDataToListFromBase();
+        // loadDataToListFromBase();
       });
     });
   }
@@ -190,7 +188,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
-
     for (Circle circle in circles) {
       double distance = Geolocator.distanceBetween(
         currentLatitude,
@@ -263,19 +260,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
   }
 
-  ///Danger and history list Id check for duplicates
-  bool checkListsforDuplicates(List<dynamic> list, dynamic id) {
-    if (list.isEmpty) {
-      return false;
-    }
-    for (var item in list) {
-      if (item['id'] == id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   ///Circle ID check for duplicates
   bool checkDuplicatesCircle(Set<Circle> set, dynamic id) {
     for (var item in set) {
@@ -307,9 +291,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           .then((QuerySnapshot querySnapshot) {
         final existingIds = Set<String>.from(
             querySnapshot.docs.map((doc) => doc['id'].toString()));
-        print(existingIds.toString());
-        print(dangerZonesData[i]['id'].toString());
-        if (!existingIds.contains(dangerZonesData[i]['id'].toString())) {
+        print("existing id $existingIds");
+        print("current id ${dangerZonesData[i]['id']}");
+        print("contains or not ${existingIds
+                .contains(dangerZonesData[i]['id'].toString())}");
+        if (existingIds.lookup(dangerZonesData[i]['id'].toString()) == null) {
           dangerZonesRef
               .doc(deviceId.toString())
               .collection('dangerZonesData')
@@ -349,7 +335,12 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         final existingPolygonIds = Set<String>.from(
             querySnapshot.docs.map((doc) => doc['polygonId'].toString()));
         for (var polygon in polygons) {
-          if (!existingPolygonIds.contains(polygon.polygonId.toString())) {
+          print("existing id $existingPolygonIds");
+          print("current id ${polygon.polygonId}");
+          print("contains or not ${existingPolygonIds
+                  .contains(polygon.polygonId.toString())}");
+          if (existingPolygonIds.lookup(polygon.polygonId.value.toString()) ==
+              null) {
             List<String> coordinatesList = [];
 
             for (var point in polygon.points.toList()) {
@@ -379,16 +370,22 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             'radius': circle.radius.toString(),
           });
         }
-      }
-      final existingCircleIds = Set<String>.from(
-          querySnapshot.docs.map((doc) => doc['circleId'].toString()));
-      for (var circle in circles) {
-        if (!existingCircleIds.contains(circle.circleId.toString())) {
-          dangerZonesRef.doc(deviceId.toString()).collection('circles').add({
-            'circleId': circle.circleId.value.toString(),
-            'center': circle.center.toJson().toString(),
-            'radius': circle.radius.toString(),
-          });
+      } else {
+        final existingCircleIds = Set<String>.from(
+            querySnapshot.docs.map((doc) => doc['circleId'].toString()));
+        for (var circle in circles) {
+          print("existing id $existingCircleIds");
+          print("current id ${circle.circleId.value}");
+          print("contains or not ");
+
+          if (existingCircleIds.lookup(circle.circleId.value.toString()) ==
+              null) {
+            dangerZonesRef.doc(deviceId.toString()).collection('circles').add({
+              'circleId': circle.circleId.value.toString(),
+              'center': circle.center.toJson().toString(),
+              'radius': circle.radius.toString(),
+            });
+          }
         }
       }
     }).catchError((error) => print('Error getting documents: $error'));
@@ -417,7 +414,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 //From Database
   Future<void> loadDataToListFromBase() async {
     print("loading");
-    QuerySnapshot querySnapshot = await dangerZonesRef.doc(deviceId).collection('kk').get();
+    QuerySnapshot querySnapshot =
+        await dangerZonesRef.doc(deviceId).collection('kk').get();
     await loadCircles();
     await loadDangerZonesData();
     await loadPolygons();
@@ -425,27 +423,38 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> loadDangerZonesData() async {
-    QuerySnapshot querySnapshot = await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
+    QuerySnapshot querySnapshot =
+    await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
+
+    List<Map<String, dynamic>> newDangerZones = [];
+
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      if (!checkListsforDuplicates(dangerZonesData, x['id'])) {
-        setState(() {
-          dangerZonesData.add({
-            'Coordinates': x['Coordinates'],
-            'Locations': x['Locations'],
-            'description': x['description'],
-            'id': x['id'],
-            'timeStamp': x['timeStamp'],
-            'title': x['title'],
-          });
+
+      bool found = dangerZonesData.any((item) => item['id'].toString() == x['id'].toString());
+      print(found);
+      if (!found) {
+        newDangerZones.add({
+          'Coordinates': x['Coordinates'],
+          'Locations': x['Locations'],
+          'description': x['description'],
+          'id': x['id'],
+          'timeStamp': x['timeStamp'],
+          'title': x['title'],
         });
       }
     });
+
+    setState(() {
+      dangerZonesData.addAll(newDangerZones);
+    });
   }
 
-  Future<void> loadCircles() async {
 
-    QuerySnapshot querySnapshot = await dangerZonesRef.doc(deviceId).collection('circles').get();
+
+  Future<void> loadCircles() async {
+    QuerySnapshot querySnapshot =
+        await dangerZonesRef.doc(deviceId).collection('circles').get();
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
       if (!checkDuplicatesCircle(circles, x['circleId'])) {
@@ -469,16 +478,17 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> loadPolygons() async {
-    QuerySnapshot querySnapshot = await dangerZonesRef.doc(deviceId).collection('polygons').get();
+    QuerySnapshot querySnapshot =
+        await dangerZonesRef.doc(deviceId).collection('polygons').get();
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
       if (!checkDuplicatesPolygon(polygons, x['polygonId'])) {
         List<dynamic> coordinates = jsonDecode(x['coordinates']);
         List<LatLng> latLngList = coordinates
             .map((coord) => LatLng(
-          coord[0] as double, // latitude
-          coord[1] as double, // longitude
-        ))
+                  coord[0] as double, // latitude
+                  coord[1] as double, // longitude
+                ))
             .toList();
 
         Polygon temppoly = Polygon(
@@ -498,14 +508,30 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> loadHistoryList() async {
-    QuerySnapshot querySnapshot = await dangerZonesRef.doc(deviceId).collection('historyList').get();
+    QuerySnapshot querySnapshot =
+    await dangerZonesRef.doc(deviceId).collection('historyList').get();
+
+    List<Map<String, String>> newHistoryList = [];
+
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-      if (!checkListsforDuplicates(historyList, x['id'])) {
-        setState(() {
-          historyList.add({'id': x['id'], 'position': x['position']});
+
+      bool found = historyList.any((item) => item['id'].toString() == x['id'].toString());
+
+      if (!found) {
+        newHistoryList.add({
+          'Coordinates': x['Coordinates'],
+          'Locations': x['Locations'],
+          'description': x['description'],
+          'id': x['id'],
+          'timeStamp': x['timeStamp'],
+          'title': x['title'],
         });
       }
+    });
+
+    setState(() {
+      historyList.addAll(newHistoryList);
     });
   }
 
@@ -518,12 +544,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     );
 
     // const apiEndpoint = "http://192.168.0.108:5000";
-    const apiEndpoint = "http://172.22.101.16:5000";
+    const apiEndpoint = "http://192.168.0.111:5000";
 
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
     try {
-      final response = await get(Uri.parse(apiEndpoint)).timeout(const Duration(minutes: 2));
+      final response =
+          await get(Uri.parse(apiEndpoint)).timeout(const Duration(minutes: 2));
       final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
@@ -565,7 +592,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               for (final polygon in polygons) {
                 print(
                     "this is the poly id ${polygon.polygonId.value} and points ${polygons.last.points}");
-                if (polygon.polygonId != item['id']) {
+                if (polygon.polygonId.value != item['id']) {
                   // Todo () make it on title
                   setState(() {
                     polygonsTemp.add(Polygon(
@@ -597,7 +624,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             });
           }
         }
-
       } else {
         print(response.body);
         throw 'Problem with the get request';
@@ -635,16 +661,16 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   void getList() {
-    // dangerZonesData.forEach((element) {
-    //   print(element);
-    // });
-    // polygons.forEach((element) {
-    //   print(element.polygonId.value.toString());
-    //   print(element.points.toList().first.toJson());
-    // });
+    dangerZonesData.forEach((element) {
+      print("dang "+element['id'].toString());
+    });
+    polygons.forEach((element) {
+      print("poly "+element.polygonId.value.toString());
+      // print(element.points.toList().first.toJson());
+    });
     circles.forEach((element) {
-      print(element.circleId.value.toString());
-      print(element.center.toJson().toString());
+      print("cicle "+element.circleId.value.toString());
+      // print(element.center.toJson().toString());
     });
     if (historyList.isEmpty) print("empty history");
     for (var item in historyList) {
@@ -746,10 +772,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-
-          Cards(historyList, dangerZonesData, deviceId)
-        ],
+        children: [Cards(historyList, dangerZonesData, deviceId)],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Align(
