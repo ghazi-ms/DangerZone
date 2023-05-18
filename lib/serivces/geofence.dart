@@ -660,7 +660,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     );
 
     // const apiEndpoint = "http://192.168.0.108:5000";
-    const apiEndpoint = "http://192.168.0.111:5000";
+    const apiEndpoint = "http://ghazims.pythonanywhere.com/";
 
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
