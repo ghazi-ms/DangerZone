@@ -40,7 +40,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
   static const int tolerance = 100;
-  int Minutes = 15;
+  late int Minutes;
   late Timer _timerServer;
   late Timer _timerList;
   Set<Circle> circles = {};
@@ -90,6 +90,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
   void callServerFunction() {
     // Perform network request
+    print("called");
     fetchDangerZones();
   }
 
@@ -540,18 +541,16 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     querySnapshot.docs.forEach((element) {
       Map x = element.data() as Map;
-
+      print(element.data());
       bool found = historyList.any((item) => item['id'].toString() == x['id'].toString());
 
       if (!found) {
-        newHistoryList.add({
-          'Coordinates': x['Coordinates'],
-          'Locations': x['Locations'],
-          'description': x['description'],
-          'id': x['id'],
-          'timeStamp': x['timeStamp'],
-          'title': x['title'],
-        });
+        newHistoryList.add(
+              {
+              'id': x['id'].toString(),
+              'position': x['position'].toString()
+            }
+        );
       }
     });
 
@@ -582,6 +581,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Data Received !')),
         );
+
         setState(() {
           dangerZonesData.addAll(data);
         });
