@@ -136,7 +136,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // loadDataToListFromBase();
+      loadDataToListFromBase();
     }
     if (state == AppLifecycleState.paused) {
       uploadToFirbase();
@@ -177,7 +177,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        // loadDataToListFromBase();
+        loadDataToListFromBase();
       });
     });
   }
@@ -558,7 +558,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> fetchDangerZones() async {
-    // loadDataToListFromBase();
+    loadDataToListFromBase();
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.showSnackBar(
       const SnackBar(content: Text('Getting new danger zones')),
