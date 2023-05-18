@@ -541,14 +541,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           .any((item) => item['id'].toString() == x['id'].toString());
 
       if (!found) {
-        newHistoryList.add({
-          'Coordinates': x['Coordinates'],
-          'Locations': x['Locations'],
-          'description': x['description'],
-          'id': x['id'],
-          'timeStamp': x['timeStamp'],
-          'title': x['title'],
-        });
+        newHistoryList.add(
+            {
+              'id': x['id'].toString(),
+              'position': x['position'].toString()
+            }
+        );
+
       }
     });
 
@@ -577,6 +576,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('Data Received !')),
         );
+
         List<Map<String, dynamic>> data =
             json.decode(response.body).cast<Map<String, dynamic>>();
 
