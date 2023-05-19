@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:updated_grad/widgets/NewsCards.dart';
+import 'package:updated_grad/widgets/DangerEventCard.dart';
 
 class Cards extends StatefulWidget {
   List<Map<String, String>> historyList = [];
@@ -18,14 +18,14 @@ class _CardsState extends State<Cards> {
 
   @override
   Widget build(BuildContext context) {
-    final RawScreenHeight = MediaQuery.of(context).size.height;
+
     final screenWidth = MediaQuery.of(context).size.width;
-    final appBarHeight = AppBar().preferredSize.height;
+    final RawScreenHeight = MediaQuery.of(context).size.height;
+    final appBarHeight = kToolbarHeight; // Use the constant value for AppBar height
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final buttonBarHeight = MediaQuery.of(context).padding.bottom;
     final screenHeight =
-        RawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight - 28;
-
+        RawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight;
     //CollectionReference collectionReference = FirebaseFirestore.instance.collection('dangerZones');
 
     //---------------
@@ -59,44 +59,80 @@ class _CardsState extends State<Cards> {
       }
     }
 
-
     return matchedList.isNotEmpty
-        ? SizedBox(
-      height: screenHeight,
-      width: screenWidth,
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            for (int index = 0; index < matchedList.length; index++)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(3, 0, 3, 15),
-                child: NewsCards(
-                  title: matchedList[index]['title'],
-                  description: matchedList[index]['description'],
-                  timestamp: matchedList[index]['timeStamp'],
-                  coordinate: matchedList[index]['position'],
-                  id: matchedList[index]['id'],
-                ),
-              ),
+        ? LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: 100,
+              maxHeight: screenHeight-24,
+            ),
+            child: ListView(
 
-          ],
-        ),
-      ),
+              children: [
+                for (int index = 0; index < matchedList.length; index++)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(23, 16, 23, 16),
+                    child: DangerEventCard(
+                      title: matchedList[index]['title'],
+                      description: matchedList[index]['description'],
+                      timestamp: matchedList[index]['timeStamp'],
+                      coordinate: matchedList[index]['position'],
+                      id: matchedList[index]['id'],
+                    ),
+                  ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(23, 16, 23, 16),
+                  child: DangerEventCard(
+                    title: "إجلاء مئات الأشخاص إثر حريق غابات في إسبانيا",
+                    description: "matchedList[index]['description']",
+                    timestamp: '05/19/2323',
+                    coordinate: "32.25565,35.20165165",
+                    id: '-1',
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(23, 16, 23, 16),
+                  child: DangerEventCard(
+                    title: "السفير الهولندي لدى عمّان يشيد بأهمية دور الأردن بالمنطقة والعالم - فيديو",
+                    description: "matchedList[index]['description']",
+                    timestamp: '05/19/2323',
+                    coordinate: "32.25565,35.20165165",
+                    id: '-1',
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(23, 16, 23, 16),
+                  child: DangerEventCard(
+                    title: "توقيف 13 شخصا اعتدوا على رجال أمن في الزرقاء",
+                    description: "matchedList[index]['description']",
+                    timestamp: '05/19/2323',
+                    coordinate: "32.25565,35.20165165",
+                    id: '-1',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     )
+
         : Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: const [
         Center(
           child: Text(
-            "You're safe !\nyou haven't entered any danger zones",
+            "You're safe!\nYou haven't entered any danger zones",
             style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ),
       ],
     );
-  }
+
 // Get a reference to the dangerZones collection
 //     var dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
 //
@@ -198,4 +234,5 @@ class _CardsState extends State<Cards> {
 
      */
 
+}
 }

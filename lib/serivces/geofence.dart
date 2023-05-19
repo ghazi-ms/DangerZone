@@ -25,13 +25,11 @@ class GeofenceMap extends StatefulWidget {
   _GeofenceMapState createState() => _GeofenceMapState();
 }
 
-List<Map<String, String>> historyList = [];
-
-List<dynamic> dangerGeofences = [''];
-final List<dynamic> dangerZonesData = [];
-
 class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
-  var dangerZonesRef;
+  List<Map<String, String>> historyList = [];
+  List<dynamic> dangerGeofences = [''];
+  final List<dynamic> dangerZonesData = [];
+  late CollectionReference dangerZonesRef;
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -40,15 +38,15 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
   static const int tolerance = 100;
-  int Minutes = 15;
+  int minutes = 15;
   late Timer _timerServer;
   late Timer _timerList;
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
 
   void startTimerServer() {
-    print("after $Minutes");
-    var SecondsServer = Duration(minutes: Minutes);
+    print("after $minutes");
+    var SecondsServer = Duration(minutes: minutes);
     _timerServer = Timer.periodic(
       SecondsServer,
       (Timer timer) => callServerFunction(),
@@ -56,35 +54,35 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> saveData() async {
-    var prefs = await SharedPreferences.getInstance();
-    prefs.remove("Minutes");
-    prefs.setInt("Minutes", Minutes);
-    print("saved $Minutes");
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt("Minutes", minutes);
+      print("Saved: $minutes");
+    } catch (e) {
+      print("Error saving data: $e");
+    }
   }
 
   Future<void> loadData(BuildContext context) async {
     try {
-      var prefs = await SharedPreferences.getInstance();
-      if (prefs.getInt("Minutes") != null) {
-        setState(() {
-          Minutes = prefs.getInt("Minutes")!;
-        });
-      } else {
-        print("Null");
-        setState(() {
-          Minutes = 15;
-        });
-      }
-      var snackBar = SnackBar(
-        content: Text('loaded $Minutes'),
+      final prefs = await SharedPreferences.getInstance();
+      final loadedMinutes = prefs.getInt("Minutes");
+
+      setState(() {
+        minutes = loadedMinutes ?? 15;
+      });
+
+      final snackBar = SnackBar(
+        content: Text('Loaded: $minutes'),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      print("loaded $Minutes");
+      print("Loaded: $minutes");
     } catch (e) {
       print("Error loading data: $e");
     }
   }
+
 
   void callServerFunction() {
     // Perform network request
@@ -335,8 +333,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             });
             uploadToFirbase();
           });
+          return true;
         }
-        return true;
+
       }
     }
 
@@ -365,8 +364,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             });
             uploadToFirbase();
           });
+          return true;
         }
-        return true;
+
       }
     }
     return false;
@@ -521,8 +521,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 //From Database
   Future<void> loadDataToListFromBase() async {
     print("loading");
-    QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('kk').get();
+    await dangerZonesRef.doc().get();
     await loadCircles();
     await loadDangerZonesData();
     await loadPolygons();
@@ -561,7 +560,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   Future<void> loadCircles() async {
     QuerySnapshot querySnapshot =
         await dangerZonesRef.doc(deviceId).collection('circles').get();
-
+    // if (querySnapshot.docs.isEmpty) {
+    //   querySnapshot =
+    //   await dangerZonesRef.doc(deviceId).collection('circles').get();
+    // }
+    if (querySnapshot.docs.isEmpty) {
+      print("help empty");
+    }
     List<Circle> newCircles = [];
 
     querySnapshot.docs.forEach((element) {
@@ -660,7 +665,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     );
 
     // const apiEndpoint = "http://192.168.0.108:5000";
-    const apiEndpoint = "http://ghazims.pythonanywhere.com/";
+    const apiEndpoint = "http://ghazims.pythonanywhere.cm/";
 
     // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
@@ -806,7 +811,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       print("cicle " + element.circleId.value.toString());
       // print(element.center.toJson().toString());
     });
-    print("Minutes is $Minutes");
+    print("Minutes is $minutes");
     if (historyList.isEmpty) print("empty history");
     for (var item in historyList) {
       print("the id is ${item['id']} and the position is ${item['position']}");
@@ -869,13 +874,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                               numberColor: Colors.white,
                               backgroundColor: Colors.red,
                               outOfConstraintsColor: Colors.deepOrange),
-                          initialValue: Minutes,
+                          initialValue: minutes,
                           minValue: 1,
                           maxValue: 60,
                           direction: Axis.horizontal,
                           withSpring: true,
                           onChanged: (int value) {
-                            Minutes = value;
+                            minutes = value;
                           },
                           enableOnOutOfConstraintsAnimation: true,
                           onOutOfConstraints: () =>
@@ -885,7 +890,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                       TextButton(
                           onPressed: () {
                             saveData();
-                            print(Minutes);
+                            print(minutes);
                             Navigator.of(context).pop();
                           },
                           child: const Text(
@@ -912,7 +917,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               icon: Icon(Icons.delete_sweep)),
 
         ],
-        backgroundColor: Colors.red,
+        backgroundColor: Colors.red.shade700,
         title: const Text('Danger Zone'),
       ),
       body: Column(
@@ -924,7 +929,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       floatingActionButton: Align(
         alignment: Alignment.bottomRight,
         child: FloatingActionButton(
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red.shade800,
           child: const Icon(Icons.refresh),
           onPressed: () => fetchDangerZones(),
         ),
