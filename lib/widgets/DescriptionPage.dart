@@ -28,7 +28,7 @@ class DescriptionPage extends StatelessWidget {
           child: SingleChildScrollView(
             child: Text(
               description,
-              style: const TextStyle(fontSize: 25,color: Colors.white),
+              style: const TextStyle(fontSize: 25, color: Colors.white),
             ),
           ),
         ),
