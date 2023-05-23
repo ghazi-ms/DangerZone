@@ -95,14 +95,20 @@ class DangerEventCardState extends State<DangerEventCard>
                 child: SizedBox(
                   height: 100,
                   width: 100,
-                  child: IconButton(
-                    onPressed: () {
+                  child: GestureDetector(
+                    onTap: () {
                       reDirectToMaps(widget.coordinate);
                     },
-                    iconSize: 70,
-                    icon: const Icon(
-                      Icons.map_sharp,
-                      color: Colors.white,
+                    child: Container(
+                      width: 70,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('images/Icon.png'),
+                          fit: BoxFit.cover,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
                 ),

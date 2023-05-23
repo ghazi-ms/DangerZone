@@ -638,8 +638,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         textAlign: TextAlign.right,
       )),
     );
-    // const apiEndpoint = "http://192.168.0.108:5000";
-    const apiEndpoint = "http://ghazims.pythonanywhere.com/";
+    const apiEndpoint = "http://192.168.100.62:5000";
+    //const apiEndpoint = "http://ghazims.pythonanywhere.com/";
 
     try {
       final response =
@@ -825,20 +825,25 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: const Text("تأكيد الحذف"),
+                  icon: Icon(
+                    Icons.warning,
+                    color: Colors.red,
+                    size: 50,
+                  ),
+                  title: const Text("تأكيد الحذف", textAlign: TextAlign.right,style: TextStyle(fontSize: 25),),
                   content: const Text(
-                      "هل أنت متأكد أنك تريد حذف سجل مناطق الخطر الخاص بك؟"),
+                      "هل أنت متأكد أنك تريد حذف سجل مناطق الخطر الخاص بك؟",textAlign: TextAlign.right,style: TextStyle(fontSize: 20),),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("إلغاء"),
+                      child: const Text("إلغاء",style: TextStyle(fontSize: 20),),
                     ),
                     TextButton(
                       onPressed: () {
                         clear(context);
                         Navigator.pop(context);
                       },
-                      child: const Text("حذف "),
+                      child: const Text("حذف ",style: TextStyle(fontSize: 20),),
                     ),
                   ],
                 );
@@ -886,7 +891,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: Text("إلغاء"),
+                            child: Text("إلغاء",style: TextStyle(fontSize: 25),),
                           ),
                           TextButton(
                             onPressed: () {
