@@ -38,12 +38,24 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
   static const int tolerance = 100;
-  int minutes = 15;
+  late int minutes;
   late Timer _timerServer;
   late Timer _timerList;
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
 
+  Future<void> loadMinutes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final loadedMinutes = prefs.getInt("Minutes");
+      setState(() {
+        minutes = loadedMinutes ?? 15;
+      });
+      print("Loaded: $minutes");
+    } catch (e) {
+      print("Error loading data: $e");
+    }
+  }
   void startTimerServer() {
     print("after $minutes");
     var SecondsServer = Duration(minutes: minutes);
@@ -53,7 +65,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> saveData() async {
+  Future<void> saveMinutes() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt("Minutes", minutes);
@@ -63,30 +75,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> loadData(BuildContext context) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final loadedMinutes = prefs.getInt("Minutes");
-
-      setState(() {
-        minutes = loadedMinutes ?? 15;
-      });
-
-      final snackBar = SnackBar(
-        content: Text('Loaded: $minutes'),
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      print("Loaded: $minutes");
-    } catch (e) {
-      print("Error loading data: $e");
-    }
-  }
 
 
   void callServerFunction() {
     // Perform network request
+    print("calling");
     fetchDangerZones();
+    loadDataToListFromBase();
   }
 
   void cancelTimerServer() {
@@ -102,31 +97,16 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   void callListFunction() {
-    // clear newsfeed list
-    deleteAllDocuments('dangerZones');
-    historyList.clear();
-    dangerGeofences.clear();
-    dangerZonesData.clear();
+   deleteDocuments();
   }
 
   void cancelTimerList() {
     _timerList.cancel();
   }
-
-  Future<void> deleteAllDocuments(String collectionPath) async {
-    final QuerySnapshot snapshot =
-        await FirebaseFirestore.instance.collection(collectionPath).get();
-    final List<Future<void>> futures = [];
-
-    for (final DocumentSnapshot doc in snapshot.docs) {
-      futures.add(doc.reference.delete());
-    }
-
-    await Future.wait(futures);
-  }
-
   @override
   void dispose() {
+    _timerServer.cancel();
+    _timerList.cancel();
     WidgetsBinding.instance.removeObserver(this);
     uploadToFirbase();
     super.dispose();
@@ -146,7 +126,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     deviceId = await PlatformDeviceId.getDeviceId;
     print(deviceId);
   }
-  bool isTimestampBeforeTwentyFourHours(dynamic timestamp, DateTime twentyFourHoursAgo) {
+
+  bool isTimestampBeforeTwentyFourHours(
+      dynamic timestamp, DateTime twentyFourHoursAgo) {
     if (timestamp is String) {
       // Convert the timestamp string to a DateTime object
       final dateFormat = DateFormat("MM/dd/yyyy, HH:mm:ss");
@@ -159,11 +141,10 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       return timestamp.toDate().isBefore(twentyFourHoursAgo);
     }
 
-    // Add additional checks for other timestamp formats if needed
-
     // Return false if the timestamp format is unsupported or invalid
     return false;
   }
+
   // Function to delete documents within all collections based on a specific ID and timestamp
   Future<void> deleteDocuments() async {
     final firestore = FirebaseFirestore.instance;
@@ -185,7 +166,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       // Convert timestamp to DateTime object if needed
 
       // Check if the timestamp is before 24 hours ago
-      if (isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo))  {
+      if (isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo)) {
         // Delete documents within the 'circles' collection
         print('delete $id in $timestamp');
 
@@ -240,29 +221,34 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           }
         });
       }
+      historyList.removeWhere((element) => element['id'] == id.toString());
+      dangerZonesData.removeWhere((element) => element['id'] == id.toString());
+      circles.removeWhere(
+          (element) => element.circleId.value.toString() == id.toString());
+      polygons.removeWhere(
+          (element) => element.polygonId.value.toString() == id.toString());
     }
   }
+
   @override
   void initState() {
     super.initState();
-    loadData(context);
+    loadMinutes().then((_){
+      startTimerList();
+      startTimerServer();
+    });
     DeviceInfo();
     dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
     WidgetsBinding.instance.addObserver(this);
-    startTimerList();
-    LocalNotificationService.initilize();
+    LocalNotificationService.initialize();
+    LocalNotificationService.requestNotificationPermission(context);
     NotificationService.initialize(flutterLocalNotificationsPlugin);
-    //////////
 
-    // terminated state
     FirebaseMessaging.instance.getInitialMessage().then((event) {});
 
-    // foreground state
     FirebaseMessaging.onMessage.listen((event) {
       LocalNotificationService.showNotificationOnForeground(event);
     });
-
-    // background state
     FirebaseMessaging.onMessageOpenedApp.listen((event) {});
 
     fetchingLocation();
@@ -280,7 +266,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     Location location = Location();
     bool _serviceEnabled;
     PermissionStatus _permissionGranted;
-
     _serviceEnabled = await location.serviceEnabled();
     if (!_serviceEnabled) {
       _serviceEnabled = await location.requestService();
@@ -288,6 +273,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         return;
       }
     }
+
     _permissionGranted = await location.hasPermission();
     if (_permissionGranted == PermissionStatus.denied) {
       _permissionGranted = await location.requestPermission();
@@ -335,10 +321,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           });
           return true;
         }
-
       }
     }
-
     // Check if the position is inside the polygon
     for (Polygon polygon in polygons) {
       List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
@@ -366,30 +350,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           });
           return true;
         }
-
       }
     }
     return false;
   }
-
-  ///For debugging and checking the list for duplicates from the database
-  void checkListInAnotherFunction() {
-    print("History list after getting data from database: ${historyList}");
-    print("Danger Zone Data after getting data from database:");
-    dangerZonesData.forEach((element) {
-      print(element['id']);
-    });
-    print("Circle List check ===> ");
-    circles.forEach((element) {
-      print(element.circleId);
-    });
-    print("Polygon List check ==>");
-
-    polygons.forEach((element) {
-      print(element.polygonId);
-    });
-  }
-
+  
   //to databasse
   Future<void> uploadToFirbase() async {
     print("called upload");
@@ -521,11 +486,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 //From Database
   Future<void> loadDataToListFromBase() async {
     print("loading");
-    await dangerZonesRef.doc().get();
+    await dangerZonesRef.doc().get().then((_) async {
     await loadCircles();
     await loadDangerZonesData();
     await loadPolygons();
     await loadHistoryList();
+    });
+
   }
 
   Future<void> loadDangerZonesData() async {
@@ -560,10 +527,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   Future<void> loadCircles() async {
     QuerySnapshot querySnapshot =
         await dangerZonesRef.doc(deviceId).collection('circles').get();
-    // if (querySnapshot.docs.isEmpty) {
-    //   querySnapshot =
-    //   await dangerZonesRef.doc(deviceId).collection('circles').get();
-    // }
+
     if (querySnapshot.docs.isEmpty) {
       print("help empty");
     }
@@ -643,12 +607,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
       if (!found) {
         newHistoryList.add(
-            {
-              'id': x['id'].toString(),
-              'position': x['position'].toString()
-            }
-        );
-
+            {'id': x['id'].toString(), 'position': x['position'].toString()});
       }
     });
 
@@ -663,11 +622,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     scaffoldMessenger.showSnackBar(
       const SnackBar(content: Text('Getting new danger zones')),
     );
-
     // const apiEndpoint = "http://192.168.0.108:5000";
     const apiEndpoint = "http://ghazims.pythonanywhere.com/";
-
-    // 'https://g62j4qvp3h.execute-api.us-west-2.amazonaws.com/';
 
     try {
       final response =
@@ -680,7 +636,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
         List<Map<String, dynamic>> data =
             json.decode(response.body).cast<Map<String, dynamic>>();
-
 // Adding the data to dangerZonesData if the id doesn't exist already
         data.forEach((Map<String, dynamic> newData) {
           int id = newData['id'];
@@ -693,12 +648,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             dangerZonesData.add(newData);
           }
         });
-
 // Printing the updated dangerZonesData list
         print(dangerZonesData);
-        // setState(() {
-        //   dangerZonesData.addAll(data);
-        // });
+
 
         final polygonsTemp = <Polygon>{};
 
@@ -817,7 +769,32 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       print("the id is ${item['id']} and the position is ${item['position']}");
     }
   }
+  Future<void> clear(BuildContext context) async {
 
+    final firestore = FirebaseFirestore.instance;
+    historyList.forEach((element) async {
+      await firestore
+          .collection('dangerZones')
+          .doc(deviceId)
+          .collection('historyList')
+          .where('id', isEqualTo: element['id'].toString())
+          .get()
+          .then((snapshot) {
+        for (final doc in snapshot.docs) {
+          doc.reference.delete();
+        }
+      });
+    });
+    setState(()  {
+
+      historyList.clear();
+
+    });
+    const snackBar = SnackBar(
+      content: Text('!تم مسح جميع مناطق الخطر'),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -825,28 +802,29 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     ]);
     return Scaffold(
       appBar: AppBar(
+
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_forever),
-            tooltip: 'Delete All Danger Zones',
+            tooltip: "حذف جميع مناطق الخطر",
             onPressed: () => showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: const Text("Confirm Delete"),
+                  title: const Text("تأكيد الحذف"),
                   content: const Text(
-                      "Are you sure you want to delete your danger zones history?"),
+                      "هل أنت متأكد أنك تريد حذف سجل مناطق الخطر الخاص بك؟"),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancel"),
+                      child: const Text("إلغاء"),
                     ),
                     TextButton(
                       onPressed: () {
                         clear(context);
                         Navigator.pop(context);
                       },
-                      child: const Text("Delete"),
+                      child: const Text("حذف "),
                     ),
                   ],
                 );
@@ -855,13 +833,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            tooltip: 'Change When to check for new news',
+            tooltip: 'تغيير وقت التحقق من الأخبار الجديدة',
             onPressed: () async {
               await showDialog<void>(
                 context: context,
                 builder: (BuildContext context) {
                   return SimpleDialog(
-                    title: const Text('change fetching time'),
+                    title: const Text('تغيير وقت جلب البيانات'),
                     children: <Widget>[
                       Container(
                         alignment: Alignment.center,
@@ -887,44 +865,59 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                               print("This value is too high or too low"),
                         ),
                       ),
-                      TextButton(
-                          onPressed: () {
-                            saveData();
-                            print(minutes);
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text(
-                            "Done",
-                            style: TextStyle(
-                              fontSize: 25,
-                            ),
-                          ))
-                    ],
+                      Row(
+
+                        children: [
+
+                        TextButton(onPressed: (){Navigator.of(context).pop();}, child: Text("إلغاء")),
+                        TextButton(
+                            onPressed: () {
+                              saveMinutes();
+                              print(minutes);
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text(
+                              "تم",
+                              style: TextStyle(
+                                fontSize: 25,
+                              ),
+                            )),
+                      ],)],
                   );
                 },
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.update),
-            onPressed: () => getList(),
-          ),
-          IconButton(
-              onPressed: loadDataToListFromBase, icon: Icon(Icons.save_alt)),
-          IconButton(onPressed: uploadToFirbase, icon: Icon(Icons.upload)),
-          IconButton(
-              onPressed: deleteDocuments,
-              icon: Icon(Icons.delete_sweep)),
-
+          // IconButton(
+          //   icon: const Icon(Icons.update),
+          //   onPressed: () => getList(),
+          // ),
+          // IconButton(
+          //     onPressed: loadDataToListFromBase, icon: Icon(Icons.save_alt)),
+          // IconButton(onPressed: uploadToFirbase, icon: Icon(Icons.upload)),
+          // IconButton(
+          //     onPressed: deleteDocuments, icon: Icon(Icons.delete_sweep)),
         ],
         backgroundColor: Colors.red.shade700,
-        title: const Text('Danger Zone'),
+        title: const Text('الأخبار'),
+        centerTitle: true,
+
       ),
-      body: Column(
+      body: historyList.isEmpty || dangerZonesData.isEmpty ?
+      Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
-        children: [Cards(historyList, dangerZonesData, deviceId)],
+        children: const [
+      Center(
+        child: Text(
+          "أنت في أمان "+"\n !"+"لم تدخل أي منطقة خطرة",
+          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
       ),
+        ],
+      ):
+      Cards(historyList, dangerZonesData),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Align(
         alignment: Alignment.bottomRight,
@@ -937,19 +930,4 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> clear(BuildContext context) async {
-    setState(() {
-      historyList.clear();
-      notificationMSG = '';
-      dangerGeofences.clear();
-      dangerZonesData.clear();
-    });
-    // SharedPreferences prefs = await SharedPreferences.getInstance();
-    // prefs.clear();
-    const snackBar = SnackBar(
-      content: Text('history cleared !'),
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-  }
 }
