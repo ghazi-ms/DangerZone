@@ -30,6 +30,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   List<dynamic> dangerGeofences = [''];
   final List<dynamic> dangerZonesData = [];
   late CollectionReference dangerZonesRef;
+  late String notificationBody;
+
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -735,19 +737,18 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   void _onEnterGeofence() {
     print('Entered geofence');
     //FirebaseMessaging.onBackgroundMessage(backgroundHandler);
-    // TODO: Handle enter geofence event
+
     NotificationService.showBigTextNotification(
-        title: "Danger!",
-        body: "You have entered a geofence danger",
+        title: "لقد دخلت في منطقة خطرة!",
+        body: notificationBody,
         fln: flutterLocalNotificationsPlugin);
   }
 
   void _onExitGeofence() {
     print('Exited geofence');
-    // TODO: Handle exit geofence event
     NotificationService.showBigTextNotification(
-        title: "Safe",
-        body: "Exited Danger",
+        title: "أنت في أمان!",
+        body: "لقد خرجت من منطقة الخطر",
         fln: flutterLocalNotificationsPlugin);
   }
 
