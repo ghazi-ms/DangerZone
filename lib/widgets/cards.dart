@@ -5,13 +5,10 @@ class Cards extends StatefulWidget {
   List<Map<String, String>> historyList = [];
   List<dynamic> dataList = [''];
 
-
-  Cards(this.historyList, this.dataList, {Key? key})
-      : super(key: key);
+  Cards(this.historyList, this.dataList, {Key? key}) : super(key: key);
 
   @override
   State<Cards> createState() => _CardsState();
-
 }
 
 class _CardsState extends State<Cards> {
@@ -20,8 +17,6 @@ class _CardsState extends State<Cards> {
 
   @override
   Widget build(BuildContext context) {
-
-
     final mediaQuery = MediaQuery.of(context);
     final rawScreenHeight = mediaQuery.size.height;
     const appBarHeight = kToolbarHeight;
@@ -29,14 +24,15 @@ class _CardsState extends State<Cards> {
     final statusBarHeight = mediaQuery.padding.top;
     final buttonBarHeight = mediaQuery.padding.bottom;
 
-    final screenHeight =
-        rawScreenHeight - appBarHeight - statusBarHeight - buttonBarHeight-mediaQuery.systemGestureInsets.top.toDouble()-mediaQuery.systemGestureInsets.bottom.toDouble();
+    final screenHeight = rawScreenHeight -
+        appBarHeight -
+        statusBarHeight -
+        buttonBarHeight -
+        mediaQuery.systemGestureInsets.top.toDouble() -
+        mediaQuery.systemGestureInsets.bottom.toDouble();
 
     for (var element in widget.historyList) {
-      print("id in history ${element['id'].toString()}");
-
       for (var dataListObject in widget.dataList) {
-        print('id in data list ${dataListObject['id']}');
         if (dataListObject['id'].toString() == element['id'].toString()) {
           // Check if the ID already exists in matchedList
           bool idExists = false;
@@ -54,8 +50,6 @@ class _CardsState extends State<Cards> {
               'id': element['id'].toString(),
               'position': element['position'].toString(),
             });
-          } else {
-            print("Duplicate ID found: ${element['id'].toString()}");
           }
         }
       }
@@ -64,30 +58,26 @@ class _CardsState extends State<Cards> {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: 100,
-            maxHeight: screenHeight,
-          ),
-          child: ListView.builder(
-            itemCount: matchedList.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(23, 16, 23, 16),
-                child: DangerEventCard(
-                  title: matchedList[index]['title'],
-                  description: matchedList[index]['description'],
-                  timestamp: matchedList[index]['timeStamp'],
-                  coordinate: matchedList[index]['position'],
-                  id: matchedList[index]['id'],
-                ),
-              );
-            },
-          )
-
-        );
+            constraints: BoxConstraints(
+              minHeight: 100,
+              maxHeight: screenHeight,
+            ),
+            child: ListView.builder(
+              itemCount: matchedList.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(23, 16, 23, 16),
+                  child: DangerEventCard(
+                    title: matchedList[index]['title'],
+                    description: matchedList[index]['description'],
+                    timestamp: matchedList[index]['timeStamp'],
+                    coordinate: matchedList[index]['position'],
+                    id: matchedList[index]['id'],
+                  ),
+                );
+              },
+            ));
       },
     );
-
-
   }
 }

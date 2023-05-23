@@ -28,10 +28,9 @@ class DescriptionPage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: SingleChildScrollView(
             child: Text(
-
               description,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 25,color: Colors.white),
+              style: const TextStyle(fontSize: 25, color: Colors.white),
             ),
           ),
         ),

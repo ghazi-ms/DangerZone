@@ -4,29 +4,27 @@ import 'package:page_transition/page_transition.dart';
 import 'serivces/geofence.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'customIcons/dangericon_icons.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-
     return MaterialApp(
-        title: 'danger zone',
+        title: 'منطقة الخطر',
         home: AnimatedSplashScreen(
-            splashIconSize: 300,
-            duration: 3000,
-            splash: Dangericon.logobackground,
-            nextScreen: GeofenceMap(),
-            splashTransition: SplashTransition.fadeTransition,
-            pageTransitionType: PageTransitionType.bottomToTop,
-            backgroundColor: Colors.red.shade900,
-            centered: true,
+          splashIconSize: 300,
+          duration: 3000,
+          splash: Dangericon.logobackground,
+          nextScreen: GeofenceMap(),
+          splashTransition: SplashTransition.fadeTransition,
+          pageTransitionType: PageTransitionType.bottomToTop,
+          backgroundColor: Colors.red.shade900,
+          centered: true,
         ));
   }
-
 }

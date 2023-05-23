@@ -17,7 +17,6 @@ Future<Position> allowLocationService() async {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-
         return Future.error('Location permissions are denied');
       }
     }
@@ -27,7 +26,6 @@ Future<Position> allowLocationService() async {
       return Future.error(
           'Location permissions are permanently denied, we cannot request permissions.');
     }
-
 
     // continue accessing the position of the device.
     Position position = await Geolocator.getCurrentPosition();
@@ -41,8 +39,7 @@ Future<Position> allowLocationService() async {
 Future<void> getLocation() async {
   try {
     Position position = await allowLocationService();
-    print('Latitude: ${position.latitude}, Longitude: ${position.longitude}');
   } catch (e) {
-    print(e.toString());
+    throw e.toString();
   }
 }

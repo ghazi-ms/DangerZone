@@ -30,7 +30,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   List<dynamic> dangerGeofences = [''];
   final List<dynamic> dangerZonesData = [];
   late CollectionReference dangerZonesRef;
-  late String notificationBody;
+  String notificationBody = "";
 
   late String notificationMSG;
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -53,14 +53,12 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       setState(() {
         minutes = loadedMinutes ?? 15;
       });
-      print("Loaded: $minutes");
     } catch (e) {
-      print("Error loading data: $e");
+      throw e.toString();
     }
   }
 
   void startTimerServer() {
-    print("after $minutes");
     var SecondsServer = Duration(minutes: minutes);
     _timerServer = Timer.periodic(
       SecondsServer,
@@ -72,15 +70,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt("Minutes", minutes);
-      print("Saved: $minutes");
     } catch (e) {
-      print("Error saving data: $e");
+      throw e.toString();
     }
   }
 
   void callServerFunction() {
     // Perform network request
-    print("calling");
     fetchDangerZones();
     loadDataToListFromBase();
   }
@@ -126,7 +122,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   Future<void> DeviceInfo() async {
     deviceId = await PlatformDeviceId.getDeviceId;
-    print(deviceId);
   }
 
   bool isTimestampBeforeTwentyFourHours(
@@ -170,7 +165,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       // Check if the timestamp is before 24 hours ago
       if (isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo)) {
         // Delete documents within the 'circles' collection
-        print('delete $id in $timestamp');
 
         await firestore
             .collection('dangerZones')
@@ -295,9 +289,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         });
         if (_isInsideGeofence) {
           _onEnterGeofence();
-          print('inside');
         } else {
-          print('outside');
           _onExitGeofence();
         }
       }
@@ -370,7 +362,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
   //to databasse
   Future<void> uploadToFirbase() async {
-    print("called upload");
     for (int i = 0; i < dangerZonesData.length; i++) {
       dangerZonesRef
           .doc(deviceId.toString())
@@ -392,10 +383,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             'timeStamp': dangerZonesData[i]['timeStamp'].toString(),
             'Locations': dangerZonesData[i]['Locations'].toString()
           });
-        } else {
-          print('no');
         }
-      }).catchError((error) => print('Error getting documents: $error'));
+      });
     }
 
     dangerZonesRef
@@ -410,7 +399,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           for (var point in polygon.points.toList()) {
             coordinatesList.add(point.toJson().toString());
           }
-          print(coordinatesList.toString());
           dangerZonesRef.doc(deviceId.toString()).collection('polygons').add({
             'polygonId': polygon.polygonId.value.toString(),
             'coordinates': coordinatesList.toString(),
@@ -420,10 +408,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         final existingPolygonIds = Set<String>.from(
             querySnapshot.docs.map((doc) => doc['polygonId'].toString()));
         for (var polygon in polygons) {
-          print("existing id $existingPolygonIds");
-          print("current id ${polygon.polygonId}");
-          print(
-              "contains or not ${existingPolygonIds.contains(polygon.polygonId.toString())}");
           if (existingPolygonIds.lookup(polygon.polygonId.value.toString()) ==
               null) {
             List<String> coordinatesList = [];
@@ -431,17 +415,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             for (var point in polygon.points.toList()) {
               coordinatesList.add(point.toJson().toString());
             }
-            print(coordinatesList.toString());
             dangerZonesRef.doc(deviceId.toString()).collection('polygons').add({
               'polygonId': polygon.polygonId.value.toString(),
               'coordinates': coordinatesList.toString(),
             });
-          } else {
-            print('no');
           }
         }
       }
-    }).catchError((error) => print('Error getting documents: $error'));
+    });
     dangerZonesRef
         .doc(deviceId.toString())
         .collection('circles')
@@ -459,10 +440,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         final existingCircleIds = Set<String>.from(
             querySnapshot.docs.map((doc) => doc['circleId'].toString()));
         for (var circle in circles) {
-          print("existing id $existingCircleIds");
-          print("current id ${circle.circleId.value}");
-          print("contains or not ");
-
           if (existingCircleIds.lookup(circle.circleId.value.toString()) ==
               null) {
             dangerZonesRef.doc(deviceId.toString()).collection('circles').add({
@@ -473,7 +450,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           }
         }
       }
-    }).catchError((error) => print('Error getting documents: $error'));
+    });
 
     dangerZonesRef
         .doc(deviceId.toString())
@@ -493,12 +470,11 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           });
         }
       }
-    }).catchError((error) => print('Error getting documents: $error'));
+    });
   }
 
 //From Database
   Future<void> loadDataToListFromBase() async {
-    print("loading");
     await dangerZonesRef.doc().get().then((_) async {
       await loadCircles();
       await loadDangerZonesData();
@@ -518,7 +494,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
       bool found = dangerZonesData
           .any((item) => item['id'].toString() == x['id'].toString());
-      print(found);
       if (!found) {
         newDangerZones.add({
           'Coordinates': x['Coordinates'],
@@ -540,9 +515,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     QuerySnapshot querySnapshot =
         await dangerZonesRef.doc(deviceId).collection('circles').get();
 
-    if (querySnapshot.docs.isEmpty) {
-      print("help empty");
-    }
+    if (querySnapshot.docs.isEmpty) {}
     List<Circle> newCircles = [];
 
     querySnapshot.docs.forEach((element) {
@@ -666,16 +639,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             dangerZonesData.add(newData);
           }
         });
-// Printing the updated dangerZonesData list
-        print(dangerZonesData);
 
         final polygonsTemp = <Polygon>{};
 
         for (final item in dangerZonesData) {
           final coordinates = item['Coordinates'];
-          // print(coordinates);
+
           final points = <LatLng>[];
-          // print('$item----$coordinates');
 
           if (coordinates.length > 2) {
             for (final co in coordinates) {
@@ -683,8 +653,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               final lng = double.parse(co[1].toString());
               points.add(LatLng(lat, lng));
             }
-            // print(points.toString());
-            print('id is: ${item['id']} name: ${item['title']}');
+
             if (polygons.isEmpty) {
               setState(() {
                 polygons.add(Polygon(
@@ -693,13 +662,9 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                   fillColor: Colors.blue.withOpacity(0.5),
                   strokeColor: Colors.blue,
                 ));
-                print(
-                    "this is the poly id ${polygons.first.polygonId.value} and points ${polygons.first.points}");
               });
             } else {
               for (final polygon in polygons) {
-                print(
-                    "this is the poly id ${polygon.polygonId.value} and points ${polygons.last.points}");
                 if (polygon.polygonId.value != item['id']) {
                   // Todo () make it on title
                   setState(() {
@@ -710,8 +675,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                       strokeColor: Colors.blue,
                     ));
                   });
-                } else {
-                  print('already there');
                 }
               }
               polygons.addAll(polygonsTemp);
@@ -728,29 +691,22 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                 fillColor: Colors.blue.withOpacity(0.5),
                 strokeColor: Colors.blue,
               ));
-              print('added circle and this is the id ${circles.last.circleId}');
             });
           }
         }
       } else {
-        print(response.body);
         throw 'Problem with the get request';
       }
     } catch (e) {
-      print('$e error');
       if (e.toString() == 'Connection closed while receiving data') {
         await fetchDangerZones();
       }
-    } finally {
-      print('done');
-      print("danger llist ");
     }
     uploadToFirbase();
     //Todo() call the save lists function and return to usuall
   }
 
   void _onEnterGeofence() {
-    print('Entered geofence');
     //FirebaseMessaging.onBackgroundMessage(backgroundHandler);
 
     NotificationService.showBigTextNotification(
@@ -760,7 +716,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   void _onExitGeofence() {
-    print('Exited geofence');
+    // TODO: Handle exit geofence event
     NotificationService.showBigTextNotification(
         title: "أنت في أمان!",
         body: "لقد خرجت من منطقة الخطر",
@@ -830,20 +786,33 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                     color: Colors.red,
                     size: 50,
                   ),
-                  title: const Text("تأكيد الحذف", textAlign: TextAlign.right,style: TextStyle(fontSize: 25),),
+                  title: const Text(
+                    "تأكيد الحذف",
+                    textAlign: TextAlign.right,
+                    style: TextStyle(fontSize: 25),
+                  ),
                   content: const Text(
-                      "هل أنت متأكد أنك تريد حذف سجل مناطق الخطر الخاص بك؟",textAlign: TextAlign.right,style: TextStyle(fontSize: 20),),
+                    "هل أنت متأكد أنك تريد حذف سجل مناطق الخطر الخاص بك؟",
+                    textAlign: TextAlign.right,
+                    style: TextStyle(fontSize: 20),
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("إلغاء",style: TextStyle(fontSize: 20),),
+                      child: const Text(
+                        "إلغاء",
+                        style: TextStyle(fontSize: 20),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
                         clear(context);
                         Navigator.pop(context);
                       },
-                      child: const Text("حذف ",style: TextStyle(fontSize: 20),),
+                      child: const Text(
+                        "حذف ",
+                        style: TextStyle(fontSize: 20),
+                      ),
                     ),
                   ],
                 );
@@ -858,7 +827,10 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                 context: context,
                 builder: (BuildContext context) {
                   return SimpleDialog(
-                    title: const Text('تغيير وقت جلب البيانات',textAlign: TextAlign.right,),
+                    title: const Text(
+                      'تغيير وقت جلب البيانات',
+                      textAlign: TextAlign.right,
+                    ),
                     children: <Widget>[
                       Container(
                         alignment: Alignment.center,
@@ -891,12 +863,14 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: Text("إلغاء",style: TextStyle(fontSize: 25),),
+                            child: Text(
+                              "إلغاء",
+                              style: TextStyle(fontSize: 25),
+                            ),
                           ),
                           TextButton(
                             onPressed: () {
                               saveMinutes();
-                              print(minutes);
                               Navigator.of(context).pop();
                             },
                             child: const Text(
@@ -914,15 +888,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               );
             },
           ),
-          // IconButton(
-          //   icon: const Icon(Icons.update),
-          //   onPressed: () => getList(),
-          // ),
-          // IconButton(
-          //     onPressed: loadDataToListFromBase, icon: Icon(Icons.save_alt)),
-          // IconButton(onPressed: uploadToFirbase, icon: Icon(Icons.upload)),
-          // IconButton(
-          //     onPressed: deleteDocuments, icon: Icon(Icons.delete_sweep)),
         ],
         backgroundColor: Colors.red.shade700,
         title: const Text('الأخبار'),
