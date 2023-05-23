@@ -1,30 +1,83 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class LocalNotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  static void initilize() {
+  static void initialize() {
     const InitializationSettings initializationSettings =
         InitializationSettings(
             android: AndroidInitializationSettings("@mipmap/ic_launcher"));
     _notificationsPlugin.initialize(initializationSettings);
+
+  }
+  static Future<void> requestNotificationPermission(BuildContext context) async {
+    final PermissionStatus status = await Permission.notification.request();
+
+   if (status.isDenied || status.isPermanentlyDenied) {
+      // User denied permission or permanently denied permission
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text('Notification Permission'),
+          content: const Text('Please grant permission to receive notifications.'),
+          actions: <Widget>[
+            ElevatedButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Open Settings'),
+              onPressed: () => openAppSettings(),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+  static Future<void> checkNotificationPermission() async {
+    final IOSFlutterLocalNotificationsPlugin? iosPlugin =
+    _notificationsPlugin.resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>();
+    final PermissionStatus permissionStatus = await Permission.notification.status;
+    if (permissionStatus.isDenied) {
+      await Permission.notification.request();
+    }
+    if (iosPlugin != null) {
+      final bool? isNotificationAllowed = await iosPlugin.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (isNotificationAllowed == true) {
+        print("asasdasdasdasdasdasdas");
+      } else {
+        print('Notification permission not granted');
+        // Handle the case where the user denied notification permission
+      }
+    }
   }
 
   static void showNotificationOnForeground(RemoteMessage message) {
-    const notificationDetail = NotificationDetails(
-        android: AndroidNotificationDetails(
-            "com.example.firebase_push_notification",
-            "firebase_push_notification",
-            importance: Importance.max,
-            priority: Priority.high));
+    const notificationDetails = NotificationDetails(
+      android: AndroidNotificationDetails(
+        "com.example.firebase_push_notification",
+        "firebase_push_notification",
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+    );
 
     _notificationsPlugin.show(
-        DateTime.now().microsecond,
-        message.notification!.title,
-        message.notification!.body,
-        notificationDetail,
-        payload: message.data["message"]);
+      DateTime.now().microsecond,
+      message.notification!.title,
+      message.notification!.body,
+      notificationDetails,
+      payload: message.data["message"],
+    );
   }
 }

@@ -117,6 +117,7 @@ class DangerEventCardState extends State<DangerEventCard>
                       alignment: Alignment.topRight,
                       child: Text(
                         widget.title,
+                        textAlign: TextAlign.right,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -127,6 +128,7 @@ class DangerEventCardState extends State<DangerEventCard>
                     const SizedBox(height: 50),
                     Text(
                       widget.timestamp,
+                      textAlign: TextAlign.right,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,

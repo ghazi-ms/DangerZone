@@ -12,6 +12,7 @@ class DescriptionPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.red.shade700,
         title: Text(title),
+        centerTitle: true,
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -27,8 +28,10 @@ class DescriptionPage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: SingleChildScrollView(
             child: Text(
+
               description,
-              style: const TextStyle(fontSize: 25, color: Colors.white),
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontSize: 25,color: Colors.white),
             ),
           ),
         ),
