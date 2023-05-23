@@ -27,6 +27,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  notification_permissions: ^0.6.1
+  permission_handler: ^10.2.0
   platform_device_id: ^1.0.1
   location: ^4.4.0
   google_maps_flutter: ^2.1.1
