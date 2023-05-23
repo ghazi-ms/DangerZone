@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return MaterialApp(
-        title: 'Clean Code',
+        title: 'danger zone',
         home: AnimatedSplashScreen(
             splashIconSize: 300,
             duration: 3000,

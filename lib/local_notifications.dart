@@ -38,30 +38,6 @@ class LocalNotificationService {
       );
     }
   }
-  static Future<void> checkNotificationPermission() async {
-    final IOSFlutterLocalNotificationsPlugin? iosPlugin =
-    _notificationsPlugin.resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
-    final PermissionStatus permissionStatus = await Permission.notification.status;
-    if (permissionStatus.isDenied) {
-      await Permission.notification.request();
-    }
-    if (iosPlugin != null) {
-      final bool? isNotificationAllowed = await iosPlugin.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-
-      if (isNotificationAllowed == true) {
-        print("asasdasdasdasdasdasdas");
-      } else {
-        print('Notification permission not granted');
-        // Handle the case where the user denied notification permission
-      }
-    }
-  }
-
   static void showNotificationOnForeground(RemoteMessage message) {
     const notificationDetails = NotificationDetails(
       android: AndroidNotificationDetails(
