@@ -120,7 +120,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
         // Add the new data to dangerZonesData if the ID doesn't already exist
         data.forEach((Map<String, dynamic> newData) {
           int id = newData['id'];
-
           // Check if the ID already exists in dangerZonesData
           bool idExists =
               dangerZonesData.any((existingData) => existingData['id'] == id);
@@ -363,7 +362,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             'description': dangerZonesData[i]['description'].toString(),
             'id': dangerZonesData[i]['id'].toString(),
             'timeStamp': dangerZonesData[i]['timeStamp'].toString(),
-            'Locations': dangerZonesData[i]['Locations'].toString()
+            'Locations': dangerZonesData[i]['Locations'].toString(),
+            'newsSource' : dangerZonesData[i]['newsSource'].toString()
           });
         }
       });
@@ -501,6 +501,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
           'id': x['id'],
           'timeStamp': x['timeStamp'],
           'title': x['title'],
+          'newsSource': x['newsSource']
         });
       }
     });
@@ -996,7 +997,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
               children: const [
                 Center(
                   child: Text(
-                    "أنت في أمان " + "\n !" + "لم تدخل أي منطقة خطرة",
+                    "أنت في أمان \n !لم تدخل أي منطقة خطرة",
                     style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),

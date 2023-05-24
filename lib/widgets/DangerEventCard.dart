@@ -10,6 +10,7 @@ class DangerEventCard extends StatefulWidget {
     required this.timestamp,
     required this.coordinate,
     required this.id,
+    required this.newsSource,
   }) : super(key: key);
 
   final String title;
@@ -17,7 +18,7 @@ class DangerEventCard extends StatefulWidget {
   final String coordinate;
   final String description;
   final String id;
-
+  final String newsSource;
   @override
   State<DangerEventCard> createState() => DangerEventCardState();
 }
@@ -54,6 +55,7 @@ class DangerEventCardState extends State<DangerEventCard>
 
   @override
   Widget build(BuildContext context) {
+    Map<String,String> translateList={"roya":"رؤيا","alghad":"الغد","ghazi":"المعلم غازي"};
     return AnimatedBuilder(
       animation: _animation,
       builder: (BuildContext context, Widget? child) {
@@ -87,61 +89,82 @@ class DangerEventCardState extends State<DangerEventCard>
               end: Alignment.bottomRight,
             ),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 1,
-                child: SizedBox(
-                  height: 100,
-                  width: 100,
-                  child: GestureDetector(
-                    onTap: () {
-                      reDirectToMaps(widget.coordinate);
-                    },
-                    child: Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('images/Icon.png'),
-                          fit: BoxFit.cover,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: SizedBox(
+                      height: 120,
+                      width: 100,
+                      child: GestureDetector(
+                        onTap: () {
+                          reDirectToMaps(widget.coordinate);
+                        },
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('images/Icon.png'),
+                              fit: BoxFit.cover,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                        shape: BoxShape.circle,
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 16), // Added space between map icon and text
-              Expanded(
-                flex: 4,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: Text(
-                        widget.title,
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 16),
+                  // Added space between map icon and text
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Text(
+                            widget.title,
+                            textAlign: TextAlign.right,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 16), // Adjusted the spacing
+                      ],
                     ),
-                    const SizedBox(height: 50),
-                    Text(
-                      widget.timestamp,
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                      ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+
+                children: [
+
+                  Text(
+                    widget.timestamp,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 30),
+                  Text(
+                    "من ${translateList[widget.newsSource]}",
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

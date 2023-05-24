@@ -49,6 +49,7 @@ class _CardsState extends State<Cards> {
               'timeStamp': dataListObject['timeStamp'],
               'id': element['id'].toString(),
               'position': element['position'].toString(),
+              'newsSource': dataListObject['newsSource'].toString()
             });
           }
         }
@@ -73,6 +74,7 @@ class _CardsState extends State<Cards> {
                     timestamp: matchedList[index]['timeStamp'],
                     coordinate: matchedList[index]['position'],
                     id: matchedList[index]['id'],
+                    newsSource: matchedList[index]['newsSource'],
                   ),
                 );
               },
