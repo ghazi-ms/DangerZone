@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static Future initialize(
@@ -28,5 +30,32 @@ class NotificationService {
 
     var not = NotificationDetails(android: androidPlatformChannelSpecifics);
     await fln.show(0, title, body, not);
+  }
+
+  static Future<void> requestNotificationPermission(
+      BuildContext context) async {
+    final PermissionStatus status = await Permission.notification.request();
+
+    if (status.isDenied || status.isPermanentlyDenied) {
+      // User denied permission or permanently denied permission
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text('Notification Permission'),
+          content:
+              const Text('Please grant permission to receive notifications.'),
+          actions: <Widget>[
+            ElevatedButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton(
+              child: const Text('Open Settings'),
+              onPressed: () => openAppSettings(),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

@@ -10,7 +10,7 @@ import 'package:location/location.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:platform_device_id/platform_device_id.dart';
-import 'package:updated_grad/local_notifications.dart';
+import 'package:updated_grad/firebase_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
@@ -30,7 +30,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   List<dynamic> dangerGeofences = [''];
   final List<dynamic> dangerZonesData = [];
   late CollectionReference dangerZonesRef;
-  String notificationBody = "";
+  late String notificationBody;
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -49,6 +49,12 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   void initState() {
     super.initState();
 
+    // Initialize references and services.
+    dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
+
+    NotificationService.requestNotificationPermission(context);
+    NotificationService.initialize(flutterLocalNotificationsPlugin);
+
     // Load the initial value of 'minutes' and start the timers.
     loadMinutes().then((_) {
       startTimerList();
@@ -58,18 +64,10 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     // Retrieve device information.
     deviceInfo();
 
-    // Initialize references and services.
-    dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
-    LocalNotificationService.initialize();
-    LocalNotificationService.requestNotificationPermission(context);
-    NotificationService.initialize(flutterLocalNotificationsPlugin);
-
-    // Handle initial and foreground notification messages.
-    FirebaseMessaging.instance.getInitialMessage().then((event) {});
+    // Handle foreground and background notification messages.
     FirebaseMessaging.onMessage.listen((event) {
-      LocalNotificationService.showNotificationOnForeground(event);
+      FirebaseNotifications.showNotification(event);
     });
-    FirebaseMessaging.onMessageOpenedApp.listen((event) {});
 
     // Fetch location and initiate data fetching and loading after the UI has finished rendering.
     fetchingLocation();
