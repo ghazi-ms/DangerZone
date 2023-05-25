@@ -77,14 +77,13 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
+        // Load existing data from the Firebase collection
         loadDataToListFromBase();
       });
     });
   }
 
   Future<void> fetchDangerZones() async {
-    // Load existing data from the Firebase collection
-    loadDataToListFromBase();
 
     // Show a snack bar notification indicating the retrieval of new danger zones
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -97,8 +96,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       ),
     );
 
-    const apiEndpoint =
-        "http://ghazims.pythonanywhere.com/"; // Replace with the actual API endpoint
+    const apiEndpoint = "https://backendgradproject-z9mv-master-gtgu5kzprq-wl.a.run.app";
 
     try {
       // Send a GET request to the API endpoint to fetch new danger zones
@@ -486,22 +484,22 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     querySnapshot.docs.forEach((element) {
       // Extract data from the document snapshot
-      Map x = element.data() as Map;
+      Map data = element.data() as Map;
 
       // Check if the danger zone ID already exists in the current danger zones data
       bool found = dangerZonesData
-          .any((item) => item['id'].toString() == x['id'].toString());
+          .any((item) => item['id'].toString() == data['id'].toString());
 
       // Add the new danger zone to the list if it doesn't already exist
       if (!found) {
         newDangerZones.add({
-          'Coordinates': x['Coordinates'],
-          'Locations': x['Locations'],
-          'description': x['description'],
-          'id': x['id'],
-          'timeStamp': x['timeStamp'],
-          'title': x['title'],
-          'newsSource': x['newsSource']
+          'Coordinates': data['Coordinates'],
+          'Locations': data['Locations'],
+          'description': data['description'],
+          'id': data['id'],
+          'timeStamp': data['timeStamp'],
+          'title': data['title'],
+          'newsSource': data['newsSource']
         });
       }
     });
@@ -521,21 +519,21 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     querySnapshot.docs.forEach((element) {
       // Extract data from the document snapshot
-      Map x = element.data() as Map;
+      Map data = element.data() as Map;
 
       // Check if the circle with the given circle ID already exists
       bool found = circles
-          .any((circle) => circle.circleId.value == x['circleId'].toString());
+          .any((circle) => circle.circleId.value == data['circleId'].toString());
 
       // Add the new circle to the list if it doesn't already exist
       if (!found) {
-        List<dynamic> center = jsonDecode(x['center']);
+        List<dynamic> center = jsonDecode(data['center']);
         double latitude = double.parse(center[0].toString());
         double longitude = double.parse(center[1].toString());
         Circle tempCircle = Circle(
-          circleId: CircleId(x['circleId'].toString()),
+          circleId: CircleId(data['circleId'].toString()),
           center: LatLng(latitude, longitude),
-          radius: double.parse(x['radius'].toString()),
+          radius: double.parse(data['radius'].toString()),
         );
 
         newCircles.add(tempCircle);
@@ -557,15 +555,15 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     querySnapshot.docs.forEach((element) {
       // Extract data from the document snapshot
-      Map x = element.data() as Map;
+      Map data = element.data() as Map;
 
       // Check if the polygon with the given polygon ID already exists
       bool found = polygons.any(
-          (polygon) => polygon.polygonId.value == x['polygonId'].toString());
+          (polygon) => polygon.polygonId.value == data['polygonId'].toString());
 
       // Add the new polygon to the list if it doesn't already exist
       if (!found) {
-        List<dynamic> coordinates = jsonDecode(x['coordinates']);
+        List<dynamic> coordinates = jsonDecode(data['coordinates']);
         List<LatLng> latLngList = coordinates
             .map((coord) => LatLng(
                   coord[0] as double, // latitude
@@ -574,7 +572,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             .toList();
 
         Polygon tempPoly = Polygon(
-          polygonId: PolygonId(x['polygonId']),
+          polygonId: PolygonId(data['polygonId']),
           points: latLngList,
         );
 
@@ -597,17 +595,17 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
 
     querySnapshot.docs.forEach((element) {
       // Extract data from the document snapshot
-      Map x = element.data() as Map;
+      Map data = element.data() as Map;
 
       // Check if the history item with the given ID already exists
       bool found = historyList
-          .any((item) => item['id'].toString() == x['id'].toString());
+          .any((item) => item['id'].toString() == data['id'].toString());
 
       // Add the new history item to the list if it doesn't already exist
       if (!found) {
         newHistoryList.add({
-          'id': x['id'].toString(),
-          'position': x['position'].toString(),
+          'id': data['id'].toString(),
+          'position': data['position'].toString(),
         });
       }
     });
@@ -968,6 +966,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
                           TextButton(
                             onPressed: () {
                               saveMinutes();
+                              cancelTimerServer();
+                              startTimerServer();
                               Navigator.of(context).pop();
                             },
                             child: const Text(

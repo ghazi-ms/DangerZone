@@ -55,7 +55,7 @@ class DangerEventCardState extends State<DangerEventCard>
 
   @override
   Widget build(BuildContext context) {
-    Map<String,String> translateList={"roya":"رؤيا","alghad":"الغد","ghazi":"المعلم غازي"};
+    Map<String,String> translateList={"roya":"رؤيا","alghad":"الغد"};
     return AnimatedBuilder(
       animation: _animation,
       builder: (BuildContext context, Widget? child) {
