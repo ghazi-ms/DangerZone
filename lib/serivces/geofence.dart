@@ -84,7 +84,6 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
   }
 
   Future<void> fetchDangerZones() async {
-
     // Show a snack bar notification indicating the retrieval of new danger zones
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.showSnackBar(
@@ -96,7 +95,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       ),
     );
 
-    const apiEndpoint = "https://backendgradproject-z9mv-master-gtgu5kzprq-wl.a.run.app";
+    const apiEndpoint =
+        "https://backendgradproject-z9mv-master-gtgu5kzprq-wl.a.run.app";
 
     try {
       // Send a GET request to the API endpoint to fetch new danger zones
@@ -361,7 +361,7 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
             'id': dangerZonesData[i]['id'].toString(),
             'timeStamp': dangerZonesData[i]['timeStamp'].toString(),
             'Locations': dangerZonesData[i]['Locations'].toString(),
-            'newsSource' : dangerZonesData[i]['newsSource'].toString()
+            'newsSource': dangerZonesData[i]['newsSource'].toString()
           });
         }
       });
@@ -522,8 +522,8 @@ class _GeofenceMapState extends State<GeofenceMap> with WidgetsBindingObserver {
       Map data = element.data() as Map;
 
       // Check if the circle with the given circle ID already exists
-      bool found = circles
-          .any((circle) => circle.circleId.value == data['circleId'].toString());
+      bool found = circles.any(
+          (circle) => circle.circleId.value == data['circleId'].toString());
 
       // Add the new circle to the list if it doesn't already exist
       if (!found) {

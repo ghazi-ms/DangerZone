@@ -36,7 +36,10 @@ class NotificationService {
       BuildContext context) async {
     final PermissionStatus status = await Permission.notification.request();
 
-    if (status.isDenied || status.isPermanentlyDenied) {
+    if (status.isDenied ||
+        status.isPermanentlyDenied ||
+        status.isRestricted ||
+        status.isLimited) {
       // User denied permission or permanently denied permission
       showDialog(
         context: context,
@@ -50,9 +53,11 @@ class NotificationService {
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-              child: const Text('Open Settings'),
-              onPressed: () => openAppSettings(),
-            ),
+                child: const Text('Open Settings'),
+                onPressed: () {
+                  openAppSettings();
+                  Navigator.of(context).pop();
+                }),
           ],
         ),
       );
