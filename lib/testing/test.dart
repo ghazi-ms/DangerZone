@@ -82,14 +82,15 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     dynamic response = await backendFetch.fetchDangerZoneData(dangerZonesData);
     if (response['status'] == 200) {
       await loadDataToList();
-      updatePolygons();
-      updateCircles();
+
       setState(() {
-        historyList;
         dangerZonesData;
+        historyList;
         circles;
         polygons;
       });
+      updatePolygons();
+      updateCircles();
       uploadToFirebase();
     }
     showSnackBar(response['message']);
