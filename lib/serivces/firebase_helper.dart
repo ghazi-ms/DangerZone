@@ -5,27 +5,25 @@ class FireBaseHelper {
   late String _deviceId;
   late CollectionReference _dangerZonesRef;
 
+  static FireBaseHelper? _instance;
+
+  factory FireBaseHelper() {
+    _instance ??= FireBaseHelper._internal();
+    return _instance!;
+  }
+
+  FireBaseHelper._internal() {
+    _deviceInfo();
+    _dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
+  }
+
   Future<void> _deviceInfo() async {
     _deviceId = (await PlatformDeviceId.getDeviceId)!;
     print(_deviceId);
   }
 
-  FireBaseHelper(){
-    _deviceInfo();
-    _dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
-
-  }
-
-  FireBaseHelper? _instance;
-
-  FireBaseHelper? getInstance(){
-    print("asdasdasdasdasdas");
-    _instance ??= FireBaseHelper();  // if null initiate a new object
-    return _instance;
-  }
-
   Future<void> uploadData(dynamic list, String type) async {
-    switch (type){
+    switch (type) {
       case "circle":
         await _uploadCirclesData(list);
         print('1');
@@ -42,7 +40,6 @@ class FireBaseHelper {
         await _uploadDangerZonesData(list);
         print('4');
         break;
-
     }
   }
 
@@ -88,7 +85,7 @@ class FireBaseHelper {
       final existingPolygonIds = Set<String>.from(
           querySnapshot.docs.map((doc) => doc['polygonId'].toString()));
 
-      await _addNewPolygonsToFirebase(existingPolygonIds ,polygons);
+      await _addNewPolygonsToFirebase(existingPolygonIds, polygons);
     }
   }
 
@@ -102,8 +99,10 @@ class FireBaseHelper {
         coordinatesList.add(point.toJson().toString());
       }
 
-      final documentRef =
-      _dangerZonesRef.doc(_deviceId.toString()).collection('polygons').doc();
+      final documentRef = _dangerZonesRef
+          .doc(_deviceId.toString())
+          .collection('polygons')
+          .doc();
       batch.set(documentRef, {
         'polygonId': polygon.polygonId.value.toString(),
         'coordinates': coordinatesList.toString(),
@@ -113,7 +112,8 @@ class FireBaseHelper {
     return batch.commit();
   }
 
-  Future<void> _addNewPolygonsToFirebase(Set<String> existingPolygonIds , dynamic polygons) {
+  Future<void> _addNewPolygonsToFirebase(
+      Set<String> existingPolygonIds, dynamic polygons) {
     final batch = FirebaseFirestore.instance.batch();
 
     for (var polygon in polygons) {
@@ -139,7 +139,6 @@ class FireBaseHelper {
   }
 
   Future<void> _uploadCirclesData(dynamic circles) async {
-
     final querySnapshot = await _dangerZonesRef
         .doc(_deviceId.toString())
         .collection('circles')
@@ -154,7 +153,6 @@ class FireBaseHelper {
 
       await _addNewCirclesToFirebase(existingCircleIds, circles);
     }
-
   }
 
   Future<void> _addCirclesToFirebase(dynamic circles) {
@@ -162,7 +160,7 @@ class FireBaseHelper {
     print("batch");
     for (var circle in circles) {
       final documentRef =
-      _dangerZonesRef.doc(_deviceId.toString()).collection('circles').doc();
+          _dangerZonesRef.doc(_deviceId.toString()).collection('circles').doc();
       batch.set(documentRef, {
         'circleId': circle.circleId.value.toString(),
         'center': circle.center.toJson().toString(),
@@ -173,13 +171,16 @@ class FireBaseHelper {
     return batch.commit();
   }
 
-  Future<void> _addNewCirclesToFirebase(Set<String> existingCircleIds, dynamic circles) {
+  Future<void> _addNewCirclesToFirebase(
+      Set<String> existingCircleIds, dynamic circles) {
     final batch = FirebaseFirestore.instance.batch();
 
     for (var circle in circles) {
       if (!existingCircleIds.contains(circle.circleId.value.toString())) {
-        final documentRef =
-        _dangerZonesRef.doc(_deviceId.toString()).collection('circles').doc();
+        final documentRef = _dangerZonesRef
+            .doc(_deviceId.toString())
+            .collection('circles')
+            .doc();
         batch.set(documentRef, {
           'circleId': circle.circleId.value.toString(),
           'center': circle.center.toJson().toString(),
@@ -208,11 +209,11 @@ class FireBaseHelper {
     });
   }
 
-  Future<void> _addHistoryItemToFirebase(Map<String, dynamic> historyItem) async {
+  Future<void> _addHistoryItemToFirebase(
+      Map<String, dynamic> historyItem) async {
     _dangerZonesRef.doc(_deviceId.toString()).collection('historyList').add({
       'id': historyItem['id'].toString(),
       'position': historyItem['position'].toString(),
     });
   }
-
 }
