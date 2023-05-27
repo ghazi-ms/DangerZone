@@ -99,11 +99,12 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     final polygonsTemp = <Polygon>{};
 
     for (final item in dangerZonesData) {
+      print(item['Coordinates']);
       final coordinates = item['Coordinates'];
       final points = <LatLng>[];
 
       if (coordinates.length > 2) {
-        for (final co in coordinates) {
+        for (String co in coordinates) {
           final lat = double.parse(co[0].toString());
           final lng = double.parse(co[1].toString());
           points.add(LatLng(lat, lng));

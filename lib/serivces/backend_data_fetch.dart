@@ -10,15 +10,12 @@ class BackendDataFetch{
   BackendDataFetch();
 
   Future<Map<String,dynamic>> fetchDangerZoneData(dynamic dangerZonesData) async {
-
-
     try {
       final response = await get(Uri.parse(_apiEndpoint)).timeout(const Duration(minutes: 2));
       _respone_status =response.statusCode;
       if (_respone_status == 200) {
         _response_message="!تم العتور على مناطق خطر جديدة";
-        List<Map<String, dynamic>> data =
-        json.decode(response.body).cast<Map<String, dynamic>>();
+        List<Map<String, dynamic>> data = json.decode(response.body).cast<Map<String, dynamic>>();
         processDangerZoneData(dangerZonesData,data);
       } else {
         _response_message="لم يتم العثور على مناطق خطر";
@@ -37,7 +34,6 @@ class BackendDataFetch{
       // Check if the ID already exists in dangerZonesData
       bool idExists = dangerZonesData.any(
               (existingData) => existingData['id'].toString() == id.toString());
-
       if (!idExists) {
         dangerZonesData.add(newData);
       }
