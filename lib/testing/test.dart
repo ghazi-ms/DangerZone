@@ -9,10 +9,9 @@ import 'package:http/http.dart';
 import 'package:location/location.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:platform_device_id/platform_device_id.dart';
 import 'package:updated_grad/firebase_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-
+import 'package:updated_grad/serivces/firebase_helper.dart';
 import '../notification_service.dart';
 import '../widgets/cards.dart';
 import 'package:number_selection/number_selection.dart';
@@ -30,7 +29,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   List<Map<String, String>> historyList = [];
   List<dynamic> dangerGeofences = [''];
   final List<dynamic> dangerZonesData = [];
-  late CollectionReference dangerZonesRef;
+
   late String notificationBody = "";
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -46,12 +45,14 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
 
+  FireBaseHelper? fireBaseHelper;
   @override
   void initState() {
     super.initState();
 
+    fireBaseHelper=FireBaseHelper();
+
     // Initialize references and services.
-    dangerZonesRef = FirebaseFirestore.instance.collection('dangerZones');
 
     NotificationService.requestNotificationPermission(context);
     NotificationService.initialize(flutterLocalNotificationsPlugin);
@@ -61,9 +62,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
       startTimerList();
       startTimerServer();
     });
-
-    // Retrieve device information.
-    deviceInfo();
 
     // Handle foreground and background notification messages.
     FirebaseMessaging.onMessage.listen((event) {
@@ -88,7 +86,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     showNotification();
     await fetchDangerZoneData();
     updateUI();
-    uploadToFirbase();
+    uploadToFirebase();
   }
 
   void showNotification() {
@@ -347,315 +345,151 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
           'position': '$latitude,$longitude',
         });
       });
+      uploadToFirebase();
     }
 
-    uploadToFirbase();
+
   }
 
-  Future<void> uploadDangerZonesData() async {
-    for (int i = 0; i < dangerZonesData.length; i++) {
-      dangerZonesRef
-          .doc(deviceId.toString())
-          .collection('dangerZonesData')
-          .get()
-          .then((QuerySnapshot querySnapshot) {
-        final existingIds = Set<String>.from(
-            querySnapshot.docs.map((doc) => doc['id'].toString()));
+  Future<void> uploadToFirebase() async {
+    print("uploading0");
+    fireBaseHelper?.uploadData(dangerZonesData, 'dangerData');
+    fireBaseHelper?.uploadData(circles, 'circle');
+    fireBaseHelper?.uploadData(polygons, 'polygon');
+    fireBaseHelper?.uploadData(historyList, 'history');
 
-        // Check if the danger zone ID already exists in the Firebase collection
-        if (existingIds.lookup(dangerZonesData[i]['id'].toString()) == null) {
-          // Add the danger zone to the Firebase collection
-          dangerZonesRef
-              .doc(deviceId.toString())
-              .collection('dangerZonesData')
-              .add({
-            'Coordinates': dangerZonesData[i]['Coordinates'].toString(),
-            'title': dangerZonesData[i]['title'].toString(),
-            'description': dangerZonesData[i]['description'].toString(),
-            'id': dangerZonesData[i]['id'].toString(),
-            'timeStamp': dangerZonesData[i]['timeStamp'].toString(),
-            'Locations': dangerZonesData[i]['Locations'].toString(),
-            'newsSource': dangerZonesData[i]['newsSource'].toString()
-          });
-        }
-      });
-    }
-  }
-
-  Future<void> uploadPolygonsData() async {
-    final querySnapshot = await dangerZonesRef
-        .doc(deviceId.toString())
-        .collection('polygons')
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      await addPolygonsToFirebase();
-    } else {
-      final existingPolygonIds = Set<String>.from(
-          querySnapshot.docs.map((doc) => doc['polygonId'].toString()));
-
-      await addNewPolygonsToFirebase(existingPolygonIds);
-    }
-  }
-
-  Future<void> addPolygonsToFirebase() {
-    final batch = FirebaseFirestore.instance.batch();
-
-    for (var polygon in polygons) {
-      List<String> coordinatesList = [];
-
-      for (var point in polygon.points.toList()) {
-        coordinatesList.add(point.toJson().toString());
-      }
-
-      final documentRef =
-          dangerZonesRef.doc(deviceId.toString()).collection('polygons').doc();
-      batch.set(documentRef, {
-        'polygonId': polygon.polygonId.value.toString(),
-        'coordinates': coordinatesList.toString(),
-      });
-    }
-
-    return batch.commit();
-  }
-
-  Future<void> addNewPolygonsToFirebase(Set<String> existingPolygonIds) {
-    final batch = FirebaseFirestore.instance.batch();
-
-    for (var polygon in polygons) {
-      if (!existingPolygonIds.contains(polygon.polygonId.value.toString())) {
-        List<String> coordinatesList = [];
-
-        for (var point in polygon.points.toList()) {
-          coordinatesList.add(point.toJson().toString());
-        }
-
-        final documentRef = dangerZonesRef
-            .doc(deviceId.toString())
-            .collection('polygons')
-            .doc();
-        batch.set(documentRef, {
-          'polygonId': polygon.polygonId.value.toString(),
-          'coordinates': coordinatesList.toString(),
-        });
-      }
-    }
-
-    return batch.commit();
-  }
-
-  Future<void> uploadCirclesData() async {
-    final querySnapshot = await dangerZonesRef
-        .doc(deviceId.toString())
-        .collection('circles')
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      await addCirclesToFirebase();
-    } else {
-      final existingCircleIds = Set<String>.from(
-          querySnapshot.docs.map((doc) => doc['circleId'].toString()));
-
-      await addNewCirclesToFirebase(existingCircleIds);
-    }
-  }
-
-  Future<void> addCirclesToFirebase() {
-    final batch = FirebaseFirestore.instance.batch();
-
-    for (var circle in circles) {
-      final documentRef =
-          dangerZonesRef.doc(deviceId.toString()).collection('circles').doc();
-      batch.set(documentRef, {
-        'circleId': circle.circleId.value.toString(),
-        'center': circle.center.toJson().toString(),
-        'radius': circle.radius.toString(),
-      });
-    }
-
-    return batch.commit();
-  }
-
-  Future<void> addNewCirclesToFirebase(Set<String> existingCircleIds) {
-    final batch = FirebaseFirestore.instance.batch();
-
-    for (var circle in circles) {
-      if (!existingCircleIds.contains(circle.circleId.value.toString())) {
-        final documentRef =
-            dangerZonesRef.doc(deviceId.toString()).collection('circles').doc();
-        batch.set(documentRef, {
-          'circleId': circle.circleId.value.toString(),
-          'center': circle.center.toJson().toString(),
-          'radius': circle.radius.toString(),
-        });
-      }
-    }
-
-    return batch.commit();
-  }
-
-  Future<void> uploadHistoryListData() async {
-    dangerZonesRef
-        .doc(deviceId.toString())
-        .collection('historyList')
-        .get()
-        .then((QuerySnapshot querySnapshot) {
-      final existingHistoryIds = Set<String>.from(
-          querySnapshot.docs.map((doc) => doc['id'].toString()));
-      // Add history items to the Firebase collection if they don't already exist
-      for (var history in historyList) {
-        if (!existingHistoryIds.contains(history['id'].toString())) {
-          addHistoryItemToFirebase(history);
-        }
-      }
-    });
-  }
-
-  Future<void> addHistoryItemToFirebase(
-      Map<String, dynamic> historyItem) async {
-    dangerZonesRef.doc(deviceId.toString()).collection('historyList').add({
-      'id': historyItem['id'].toString(),
-      'position': historyItem['position'].toString(),
-    });
-  }
-
-  Future<void> uploadToFirbase() async {
-    await uploadDangerZonesData();
-    await uploadPolygonsData();
-    await uploadCirclesData();
-    await uploadHistoryListData();
   }
 
 //Load Data from Firebase
 
   Future<void> loadDataToListFromBase() async {
-    await dangerZonesRef.doc().get().then((_) async {
-      await loadCircles();
-      await loadDangerZonesData();
-      await loadPolygons();
-      await loadHistoryList();
-    });
+    // await dangerZonesRef.doc().get().then((_) async {
+    //   await loadCircles();
+    //   await loadDangerZonesData();
+    //   await loadPolygons();
+    //   await loadHistoryList();
+    // });
   }
 
   Future<void> loadDangerZonesData() async {
-    QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
-
-    List<Map<String, dynamic>> newDangerZones = [];
-
-    querySnapshot.docs.forEach((element) {
-      Map data = element.data() as Map;
-
-      bool found = dangerZonesData
-          .any((item) => item['id'].toString() == data['id'].toString());
-
-      if (!found) {
-        newDangerZones.add({
-          'Coordinates': data['Coordinates'],
-          'Locations': data['Locations'],
-          'description': data['description'],
-          'id': data['id'],
-          'timeStamp': data['timeStamp'],
-          'title': data['title'],
-          'newsSource': data['newsSource']
-        });
-      }
-    });
-
-    setState(() {
-      dangerZonesData.addAll(newDangerZones);
-    });
+    // QuerySnapshot querySnapshot =
+    //     await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
+    //
+    // List<Map<String, dynamic>> newDangerZones = [];
+    //
+    // querySnapshot.docs.forEach((element) {
+    //   Map data = element.data() as Map;
+    //
+    //   bool found = dangerZonesData
+    //       .any((item) => item['id'].toString() == data['id'].toString());
+    //
+    //   if (!found) {
+    //     newDangerZones.add({
+    //       'Coordinates': data['Coordinates'],
+    //       'Locations': data['Locations'],
+    //       'description': data['description'],
+    //       'id': data['id'],
+    //       'timeStamp': data['timeStamp'],
+    //       'title': data['title'],
+    //       'newsSource': data['newsSource']
+    //     });
+    //   }
+    // });
+    //
+    // setState(() {
+    //   dangerZonesData.addAll(newDangerZones);
+    // });
   }
 
   Future<void> loadCircles() async {
-    QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('circles').get();
-
-    List<Circle> newCircles = [];
-
-    querySnapshot.docs.forEach((element) {
-      Map data = element.data() as Map;
-
-      bool found = circles.any(
-          (circle) => circle.circleId.value == data['circleId'].toString());
-
-      if (!found) {
-        List<dynamic> center = jsonDecode(data['center']);
-        double latitude = double.parse(center[0].toString());
-        double longitude = double.parse(center[1].toString());
-        Circle tempCircle = Circle(
-          circleId: CircleId(data['circleId'].toString()),
-          center: LatLng(latitude, longitude),
-          radius: double.parse(data['radius'].toString()),
-        );
-
-        newCircles.add(tempCircle);
-      }
-    });
-
-    setState(() {
-      circles.addAll(newCircles);
-    });
+    // QuerySnapshot querySnapshot =
+    //     await dangerZonesRef.doc(deviceId).collection('circles').get();
+    //
+    // List<Circle> newCircles = [];
+    //
+    // querySnapshot.docs.forEach((element) {
+    //   Map data = element.data() as Map;
+    //
+    //   bool found = circles.any(
+    //       (circle) => circle.circleId.value == data['circleId'].toString());
+    //
+    //   if (!found) {
+    //     List<dynamic> center = jsonDecode(data['center']);
+    //     double latitude = double.parse(center[0].toString());
+    //     double longitude = double.parse(center[1].toString());
+    //     Circle tempCircle = Circle(
+    //       circleId: CircleId(data['circleId'].toString()),
+    //       center: LatLng(latitude, longitude),
+    //       radius: double.parse(data['radius'].toString()),
+    //     );
+    //
+    //     newCircles.add(tempCircle);
+    //   }
+    // });
+    //
+    // setState(() {
+    //   circles.addAll(newCircles);
+    // });
   }
 
   Future<void> loadPolygons() async {
-    QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('polygons').get();
-
-    List<Polygon> newPolygons = [];
-
-    querySnapshot.docs.forEach((element) {
-      Map data = element.data() as Map;
-
-      bool found = polygons.any(
-          (polygon) => polygon.polygonId.value == data['polygonId'].toString());
-
-      if (!found) {
-        List<dynamic> coordinates = jsonDecode(data['coordinates']);
-        List<LatLng> latLngList = coordinates
-            .map((coord) => LatLng(
-                  coord[0] as double, // latitude
-                  coord[1] as double, // longitude
-                ))
-            .toList();
-
-        Polygon tempPoly = Polygon(
-          polygonId: PolygonId(data['polygonId']),
-          points: latLngList,
-        );
-
-        newPolygons.add(tempPoly);
-      }
-    });
-
-    setState(() {
-      polygons.addAll(newPolygons);
-    });
+    // QuerySnapshot querySnapshot =
+    //     await dangerZonesRef.doc(deviceId).collection('polygons').get();
+    //
+    // List<Polygon> newPolygons = [];
+    //
+    // querySnapshot.docs.forEach((element) {
+    //   Map data = element.data() as Map;
+    //
+    //   bool found = polygons.any(
+    //       (polygon) => polygon.polygonId.value == data['polygonId'].toString());
+    //
+    //   if (!found) {
+    //     List<dynamic> coordinates = jsonDecode(data['coordinates']);
+    //     List<LatLng> latLngList = coordinates
+    //         .map((coord) => LatLng(
+    //               coord[0] as double, // latitude
+    //               coord[1] as double, // longitude
+    //             ))
+    //         .toList();
+    //
+    //     Polygon tempPoly = Polygon(
+    //       polygonId: PolygonId(data['polygonId']),
+    //       points: latLngList,
+    //     );
+    //
+    //     newPolygons.add(tempPoly);
+    //   }
+    // });
+    //
+    // setState(() {
+    //   polygons.addAll(newPolygons);
+    // });
   }
 
   Future<void> loadHistoryList() async {
-    QuerySnapshot querySnapshot =
-        await dangerZonesRef.doc(deviceId).collection('historyList').get();
-
-    List<Map<String, String>> newHistoryList = [];
-
-    querySnapshot.docs.forEach((element) {
-      Map data = element.data() as Map;
-
-      bool found = historyList
-          .any((item) => item['id'].toString() == data['id'].toString());
-
-      if (!found) {
-        newHistoryList.add({
-          'id': data['id'].toString(),
-          'position': data['position'].toString(),
-        });
-      }
-    });
-
-    setState(() {
-      historyList.addAll(newHistoryList);
-    });
+    // QuerySnapshot querySnapshot =
+    //     await dangerZonesRef.doc(deviceId).collection('historyList').get();
+    //
+    // List<Map<String, String>> newHistoryList = [];
+    //
+    // querySnapshot.docs.forEach((element) {
+    //   Map data = element.data() as Map;
+    //
+    //   bool found = historyList
+    //       .any((item) => item['id'].toString() == data['id'].toString());
+    //
+    //   if (!found) {
+    //     newHistoryList.add({
+    //       'id': data['id'].toString(),
+    //       'position': data['position'].toString(),
+    //     });
+    //   }
+    // });
+    //
+    // setState(() {
+    //   historyList.addAll(newHistoryList);
+    // });
   }
 
   Future<void> clear(BuildContext context) async {
@@ -822,10 +656,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     _timerList.cancel();
   }
 
-  Future<void> deviceInfo() async {
-    deviceId = await PlatformDeviceId.getDeviceId;
-    print(deviceId);
-  }
+
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -835,7 +666,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
     if (state == AppLifecycleState.paused) {
       // Uploads data to Firebase when the application is paused.
-      uploadToFirbase();
+      uploadToFirebase();
     }
   }
 
@@ -849,7 +680,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
 
     // Uploads data to Firebase before disposing of the resources.
-    uploadToFirbase();
+    uploadToFirebase();
 
     // Calls the base dispose method to properly dispose of the state.
     super.dispose();
