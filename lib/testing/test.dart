@@ -98,16 +98,13 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
 
   void updatePolygons() {
     final polygonsTemp = <Polygon>{};
-
     for (final item in dangerZonesData) {
-      print(item['Coordinates']);
-      final coordinates = item['Coordinates'];
+      List coordinates = item['Coordinates'];
       final points = <LatLng>[];
-
       if (coordinates.length > 2) {
-        for (String co in coordinates) {
-          final lat = double.parse(co[0].toString());
-          final lng = double.parse(co[1].toString());
+        for (var coordinate in coordinates) {
+          final lat = double.parse(coordinate[0].toString());
+          final lng = double.parse(coordinate[1].toString());
           points.add(LatLng(lat, lng));
         }
 
@@ -281,7 +278,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   }
 
   Future<void> uploadToFirebase() async {
-    print("uploading0");
     fireBaseHelper?.uploadData(dangerZonesData, 'dangerData');
     fireBaseHelper?.uploadData(circles, 'circle');
     fireBaseHelper?.uploadData(polygons, 'polygon');
@@ -291,7 +287,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
 //Load Data from Firebase
 
   Future<void> loadDataToList() async {
-    print("loading0");
     await fireBaseHelper?.loadData(dangerZonesData, 'dangerData');
     await fireBaseHelper?.loadData(circles, 'circle');
     await fireBaseHelper?.loadData(polygons, 'polygon');
@@ -314,14 +309,14 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   }
 
   Future<void> deleteDocuments() async {
-    var deletedIds = fireBaseHelper?.deleteDocuments();
+    var deletedIds = await fireBaseHelper?.deleteDocuments();
     removeItemFromHistoryList(deletedIds as List<String>);
     removeItemFromDangerZonesData(deletedIds as List<String>);
     removeCircleItem(deletedIds as List<String>);
     removePolygonItem(deletedIds as List<String>);
   }
 
-  void removeItemFromHistoryList(List<String> deletedIds) {
+  void removeItemFromHistoryList(List<String> deletedIds) async {
     for (var id in deletedIds) {
       historyList.removeWhere((element) => element['id'] == id);
     }
@@ -403,15 +398,15 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   }
 
   void startTimerList() {
-    const listHours = Duration(hours: 24);
+    const listHours = Duration(seconds: 24);
     _timerList = Timer.periodic(
       listHours,
       (Timer timer) => callListFunction(),
     );
   }
 
-  void callListFunction() {
-    deleteDocuments();
+  void callListFunction() async {
+    await deleteDocuments();
   }
 
   void cancelTimerList() {

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:intl/intl.dart';
@@ -22,10 +21,9 @@ class FireBaseHelper {
 
   Future<void> _deviceInfo() async {
     _deviceId = (await PlatformDeviceId.getDeviceId)!;
-    print(_deviceId);
   }
 
-  Future<void> clearData(dynamic list, String listName ) async {
+  Future<void> clearData(dynamic list, String listName) async {
     final firestore = FirebaseFirestore.instance;
 
     // Iterate over the historyList and delete corresponding documents from Firestore
@@ -43,72 +41,72 @@ class FireBaseHelper {
       });
     });
     // Clear the historyList
-
   }
 
   Future<void> loadData(dynamic list, String type) async {
-
     await _dangerZonesRef.doc().get().then((_) async {
       switch (type) {
         case "circle":
           await _loadCircles(list);
-          print('1');
           break;
         case "polygon":
           await _loadPolygons(list);
-          print('2');
           break;
         case "history":
           await _loadHistoryList(list);
-          print('3');
           break;
         case "dangerData":
           await _loadDangerZonesData(list);
-          print('4');
           break;
       }
     });
-
   }
+
   Future<void> uploadData(dynamic list, String type) async {
     switch (type) {
       case "circle":
         await _uploadCirclesData(list);
-        print('1');
         break;
       case "polygon":
         await _uploadPolygonsData(list);
-        print('2');
         break;
       case "history":
         await _uploadHistoryListData(list);
-        print('3');
         break;
       case "dangerData":
         await _uploadDangerZonesData(list);
-        print('4');
         break;
     }
   }
+
   Future<List<String>> deleteDocuments() async {
     final firestore = FirebaseFirestore.instance;
     final currentTime = DateTime.now();
     final twentyFourHoursAgo = currentTime.subtract(const Duration(hours: 24));
-    final querySnapshot = await _getDangerZonesDataQuerySnapshot(firestore);
+
+    final querySnapshot = await firestore
+        .collection('dangerZones')
+        .doc(_deviceId)
+        .collection('dangerZonesData')
+        .get();
 
     for (final doc in querySnapshot.docs) {
       final id = doc['id'];
       final timestamp = doc['timeStamp'];
       _deletedIds.add(id);
       if (_isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo)) {
-        await _deleteDocumentsInCollection(firestore, 'circles', id);
-        await _deleteDocumentsInCollection(firestore, 'dangerZonesData', id);
-        await _deleteDocumentsInCollection(firestore, 'historyList', id);
-        await _deleteDocumentsInCollection(firestore, 'polygons', id);
+        await _deleteDocumentsInCollection(
+            firestore, 'circles', id, 'circleId');
+        await _deleteDocumentsInCollection(
+            firestore, 'dangerZonesData', id, 'id');
+        await _deleteDocumentsInCollection(firestore, 'historyList', id, 'id');
+        await _deleteDocumentsInCollection(
+            firestore, 'polygons', id, 'polygonId');
       }
     }
     return _deletedIds;
   }
+
   bool _isTimestampBeforeTwentyFourHours(
       dynamic timestamp, DateTime twentyFourHoursAgo) {
     if (timestamp is String) {
@@ -125,6 +123,7 @@ class FireBaseHelper {
     // Return false if the timestamp format is unsupported or invalid
     return false;
   }
+
   Future<QuerySnapshot> _getDangerZonesDataQuerySnapshot(
       FirebaseFirestore firestore) async {
     return firestore
@@ -134,22 +133,25 @@ class FireBaseHelper {
         .get();
   }
 
-  Future<void> _deleteDocumentsInCollection(
-      FirebaseFirestore firestore, String collection, String id) async {
+  Future<void> _deleteDocumentsInCollection(FirebaseFirestore firestore,
+      String collection, String id, String firbaseId) async {
     final querySnapshot = await firestore
         .collection('dangerZones')
         .doc(_deviceId)
         .collection(collection)
-        .where('id', isEqualTo: id)
+        .where(firbaseId, isEqualTo: id)
         .get();
 
     for (final doc in querySnapshot.docs) {
       await doc.reference.delete();
     }
   }
+
   Future<void> _loadDangerZonesData(dynamic dangerZonesData) async {
-    QuerySnapshot querySnapshot =
-        await _dangerZonesRef.doc(_deviceId).collection('dangerZonesData').get();
+    QuerySnapshot querySnapshot = await _dangerZonesRef
+        .doc(_deviceId)
+        .collection('dangerZonesData')
+        .get();
 
     List<Map<String, dynamic>> newDangerZones = [];
 
@@ -173,7 +175,6 @@ class FireBaseHelper {
     });
 
     dangerZonesData.addAll(newDangerZones);
-
   }
 
   Future<void> _loadCircles(dynamic circles) async {
@@ -203,7 +204,6 @@ class FireBaseHelper {
     });
 
     circles.addAll(newCircles);
-
   }
 
   Future<void> _loadPolygons(dynamic polygons) async {
@@ -237,8 +237,8 @@ class FireBaseHelper {
     });
 
     polygons.addAll(newPolygons);
-
   }
+
   Future<void> _loadHistoryList(dynamic historyList) async {
     QuerySnapshot querySnapshot =
         await _dangerZonesRef.doc(_deviceId).collection('historyList').get();
@@ -260,8 +260,8 @@ class FireBaseHelper {
     });
 
     historyList.addAll(newHistoryList);
-
   }
+
   Future<void> _uploadDangerZonesData(dynamic dangerZonesData) async {
     for (int i = 0; i < dangerZonesData.length; i++) {
       _dangerZonesRef
@@ -362,9 +362,7 @@ class FireBaseHelper {
         .doc(_deviceId.toString())
         .collection('circles')
         .get();
-    print(querySnapshot.docs.isEmpty);
     if (querySnapshot.docs.isEmpty) {
-      print("is empty");
       await _addCirclesToFirebase(circles);
     } else {
       final existingCircleIds = Set<String>.from(
@@ -376,7 +374,6 @@ class FireBaseHelper {
 
   Future<void> _addCirclesToFirebase(dynamic circles) {
     final batch = FirebaseFirestore.instance.batch();
-    print("batch");
     for (var circle in circles) {
       final documentRef =
           _dangerZonesRef.doc(_deviceId.toString()).collection('circles').doc();
