@@ -2,14 +2,14 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:platform_device_id/platform_device_id.dart';
 
 class FireBaseHelper {
   late String _deviceId;
   late CollectionReference _dangerZonesRef;
-
   static FireBaseHelper? _instance;
-
+  final List<String> _deletedIds = [];
   factory FireBaseHelper() {
     _instance ??= FireBaseHelper._internal();
     return _instance!;
@@ -90,7 +90,63 @@ class FireBaseHelper {
         break;
     }
   }
+  Future<List<String>> deleteDocuments() async {
+    final firestore = FirebaseFirestore.instance;
+    final currentTime = DateTime.now();
+    final twentyFourHoursAgo = currentTime.subtract(const Duration(hours: 24));
+    final querySnapshot = await _getDangerZonesDataQuerySnapshot(firestore);
 
+    for (final doc in querySnapshot.docs) {
+      final id = doc['id'];
+      final timestamp = doc['timeStamp'];
+      _deletedIds.add(id);
+      if (_isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo)) {
+        await _deleteDocumentsInCollection(firestore, 'circles', id);
+        await _deleteDocumentsInCollection(firestore, 'dangerZonesData', id);
+        await _deleteDocumentsInCollection(firestore, 'historyList', id);
+        await _deleteDocumentsInCollection(firestore, 'polygons', id);
+      }
+    }
+    return _deletedIds;
+  }
+  bool _isTimestampBeforeTwentyFourHours(
+      dynamic timestamp, DateTime twentyFourHoursAgo) {
+    if (timestamp is String) {
+      // Convert the timestamp string to a DateTime object
+      final dateFormat = DateFormat("MM/dd/yyyy, HH:mm:ss");
+      final timestampDateTime = dateFormat.parse(timestamp);
+
+      // Compare the timestamp with the twentyFourHoursAgo parameter
+      return timestampDateTime.isBefore(twentyFourHoursAgo);
+    } else if (timestamp is Timestamp) {
+      // Compare the Firestore Timestamp directly with the twentyFourHoursAgo parameter
+      return timestamp.toDate().isBefore(twentyFourHoursAgo);
+    }
+    // Return false if the timestamp format is unsupported or invalid
+    return false;
+  }
+  Future<QuerySnapshot> _getDangerZonesDataQuerySnapshot(
+      FirebaseFirestore firestore) async {
+    return firestore
+        .collection('dangerZones')
+        .doc(_deviceId)
+        .collection('dangerZonesData')
+        .get();
+  }
+
+  Future<void> _deleteDocumentsInCollection(
+      FirebaseFirestore firestore, String collection, String id) async {
+    final querySnapshot = await firestore
+        .collection('dangerZones')
+        .doc(_deviceId)
+        .collection(collection)
+        .where('id', isEqualTo: id)
+        .get();
+
+    for (final doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
   Future<void> _loadDangerZonesData(dynamic dangerZonesData) async {
     QuerySnapshot querySnapshot =
         await _dangerZonesRef.doc(_deviceId).collection('dangerZonesData').get();

@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart';
 import 'package:location/location.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as maps_toolkit;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -16,7 +13,8 @@ import '../notification_service.dart';
 import '../widgets/cards.dart';
 import 'package:number_selection/number_selection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
+import 'package:updated_grad/serivces/location_permission.dart';
+import 'package:updated_grad/serivces/backend_data_fetch.dart';
 
 class Test extends StatefulWidget {
   const Test({super.key});
@@ -27,14 +25,10 @@ class Test extends StatefulWidget {
 
 class _TestState extends State<Test> with WidgetsBindingObserver {
   List<Map<String, String>> historyList = [];
-  List<dynamic> dangerGeofences = [''];
   final List<dynamic> dangerZonesData = [];
-
   late String notificationBody = "";
-
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-  late LatLng center;
   String? deviceId;
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
@@ -46,11 +40,12 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   Set<Polygon> polygons = {};
 
   FireBaseHelper? fireBaseHelper;
+
   @override
   void initState() {
     super.initState();
 
-    fireBaseHelper=FireBaseHelper();
+    fireBaseHelper = FireBaseHelper();
 
     // Initialize references and services.
 
@@ -73,69 +68,31 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-      // Load existing data from the Firebase collection
+        // Load existing data from the Firebase collection
         loadDataToList();
-    });
-      // fetchDangerZones();
+      });
+      fetchDangerZones();
     });
   }
 
   Future<void> fetchDangerZones() async {
-    showNotification();
-    // await fetchDangerZoneData();
-    updateUI();
-    await loadDataToList();
-    uploadToFirebase();
-  }
+    showSnackBar('يتم استرجاع مناطق الخطر الجديدة');
+    BackendDataFetch backendFetch = BackendDataFetch();
 
-  void showNotification() {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    scaffoldMessenger.showSnackBar(
-      const SnackBar(
-        content: Text(
-          'استرجاع مناطق الخطر الجديدة',
-          textAlign: TextAlign.right,
-        ),
-      ),
-    );
-  }
-
-  Future<void> fetchDangerZoneData() async {
-    const apiEndpoint =
-        "https://backendgradproject-z9mv-master-gtgu5kzprq-wl.a.run.app/";
-
-    try {
-      final response =
-          await get(Uri.parse(apiEndpoint)).timeout(const Duration(minutes: 2));
-
-      if (response.statusCode == 200) {
-        List<Map<String, dynamic>> data =
-            json.decode(response.body).cast<Map<String, dynamic>>();
-        processDangerZoneData(data);
-      } else {
-        throw 'Problem with the GET request';
-      }
-    } catch (e) {
-      if (e.toString() == 'Connection closed while receiving data') {
-        await fetchDangerZoneData(); // Retry fetching danger zones if the connection is closed
-      }
+    dynamic response = await backendFetch.fetchDangerZoneData(dangerZonesData);
+    if (response['status'] == 200) {
+      await loadDataToList();
+      updatePolygons();
+      updateCircles();
+      setState(() {
+        historyList;
+        dangerZonesData;
+        circles;
+        polygons;
+      });
+      uploadToFirebase();
     }
-  }
-
-  void processDangerZoneData(List<Map<String, dynamic>> data) {
-    data.forEach((Map<String, dynamic> newData) {
-      int id = newData['id'];
-      // Check if the ID already exists in dangerZonesData
-      bool idExists = dangerZonesData.any(
-          (existingData) => existingData['id'].toString() == id.toString());
-
-      if (!idExists) {
-        dangerZonesData.add(newData);
-      }
-    });
-
-    updatePolygons();
-    updateCircles();
+    showSnackBar(response['message']);
   }
 
   void updatePolygons() {
@@ -202,12 +159,11 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
-  void updateUI() {
+  void showSnackBar(String message) {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.showSnackBar(
-      const SnackBar(
-        content:
-            Text('!تم استرجاع مناطق الخطر الجديدة', textAlign: TextAlign.right),
+      SnackBar(
+        content: Text(message, textAlign: TextAlign.right),
       ),
     );
   }
@@ -223,32 +179,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
       _handleLocationChange(
           currentLocation.latitude, currentLocation.longitude);
     });
-  }
-
-  Future<void> ensureLocationServiceEnabled(Location location) async {
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-
-    // Check if the location service is enabled, and request it if not.
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return;
-      }
-    }
-
-    // Check if the app has location permission, and request it if not.
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    // Enable background mode for location updates.
-    location.enableBackgroundMode(enable: true);
   }
 
   void _handleLocationChange(currentLatitude, currentLongitude) {
@@ -354,7 +284,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     fireBaseHelper?.uploadData(circles, 'circle');
     fireBaseHelper?.uploadData(polygons, 'polygon');
     fireBaseHelper?.uploadData(historyList, 'history');
-
   }
 
 //Load Data from Firebase
@@ -370,86 +299,49 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
       historyList;
       dangerZonesData;
     });
-
   }
 
-  Future<void> clear(BuildContext context, dynamic list,String listName) async {
-    fireBaseHelper?.clearData(list,listName);
+  Future<void> clear(
+      BuildContext context, dynamic list, String listName) async {
+    fireBaseHelper?.clearData(list, listName);
 
     setState(() {
       list.clear();
     });
-    showClearSnackbar(context);
-  }
-
-  void showClearSnackbar(BuildContext context) {
-    const snackBar = SnackBar(
-      content: Text('!تم مسح جميع مناطق الخطر', textAlign: TextAlign.right),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    showSnackBar('!تم مسح جميع مناطق الخطر');
   }
 
   Future<void> deleteDocuments() async {
-    final firestore = FirebaseFirestore.instance;
-    final currentTime = DateTime.now();
-    final twentyFourHoursAgo = currentTime.subtract(const Duration(hours: 24));
-    final querySnapshot = await getDangerZonesDataQuerySnapshot(firestore);
+    var deletedIds = fireBaseHelper?.deleteDocuments();
+    removeItemFromHistoryList(deletedIds as List<String>);
+    removeItemFromDangerZonesData(deletedIds as List<String>);
+    removeCircleItem(deletedIds as List<String>);
+    removePolygonItem(deletedIds as List<String>);
+  }
 
-    for (final doc in querySnapshot.docs) {
-      final id = doc['id'];
-      final timestamp = doc['timeStamp'];
-
-      if (isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo)) {
-        await deleteDocumentsInCollection(firestore, 'circles', id);
-        await deleteDocumentsInCollection(firestore, 'dangerZonesData', id);
-        await deleteDocumentsInCollection(firestore, 'historyList', id);
-        await deleteDocumentsInCollection(firestore, 'polygons', id);
-      }
-
-      removeItemFromHistoryList(id.toString());
-      removeItemFromDangerZonesData(id.toString());
-      removeCircleItem(id.toString());
-      removePolygonItem(id.toString());
+  void removeItemFromHistoryList(List<String> deletedIds) {
+    for (var id in deletedIds) {
+      historyList.removeWhere((element) => element['id'] == id);
     }
   }
 
-  Future<QuerySnapshot> getDangerZonesDataQuerySnapshot(
-      FirebaseFirestore firestore) async {
-    return firestore
-        .collection('dangerZones')
-        .doc(deviceId)
-        .collection('dangerZonesData')
-        .get();
-  }
-
-  Future<void> deleteDocumentsInCollection(
-      FirebaseFirestore firestore, String collection, String id) async {
-    final querySnapshot = await firestore
-        .collection('dangerZones')
-        .doc(deviceId)
-        .collection(collection)
-        .where('id', isEqualTo: id)
-        .get();
-
-    for (final doc in querySnapshot.docs) {
-      await doc.reference.delete();
+  void removeItemFromDangerZonesData(List<String> deletedIds) {
+    for (var id in deletedIds) {
+      dangerZonesData.removeWhere((element) => element['id'] == id);
     }
   }
 
-  void removeItemFromHistoryList(String id) {
-    historyList.removeWhere((element) => element['id'] == id);
+  void removeCircleItem(List<String> deletedIds) {
+    for (var id in deletedIds) {
+      circles.removeWhere((element) => element.circleId.value.toString() == id);
+    }
   }
 
-  void removeItemFromDangerZonesData(String id) {
-    dangerZonesData.removeWhere((element) => element['id'] == id);
-  }
-
-  void removeCircleItem(String id) {
-    circles.removeWhere((element) => element.circleId.value.toString() == id);
-  }
-
-  void removePolygonItem(String id) {
-    polygons.removeWhere((element) => element.polygonId.value.toString() == id);
+  void removePolygonItem(List<String> deletedIds) {
+    for (var id in deletedIds) {
+      polygons
+          .removeWhere((element) => element.polygonId.value.toString() == id);
+    }
   }
 
   void _onEnterGeofence() {
@@ -524,8 +416,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     _timerList.cancel();
   }
 
-
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -554,23 +444,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
 
     // Calls the base dispose method to properly dispose of the state.
     super.dispose();
-  }
-
-  bool isTimestampBeforeTwentyFourHours(
-      dynamic timestamp, DateTime twentyFourHoursAgo) {
-    if (timestamp is String) {
-      // Convert the timestamp string to a DateTime object
-      final dateFormat = DateFormat("MM/dd/yyyy, HH:mm:ss");
-      final timestampDateTime = dateFormat.parse(timestamp);
-
-      // Compare the timestamp with the twentyFourHoursAgo parameter
-      return timestampDateTime.isBefore(twentyFourHoursAgo);
-    } else if (timestamp is Timestamp) {
-      // Compare the Firestore Timestamp directly with the twentyFourHoursAgo parameter
-      return timestamp.toDate().isBefore(twentyFourHoursAgo);
-    }
-    // Return false if the timestamp format is unsupported or invalid
-    return false;
   }
 
   @override
@@ -613,7 +486,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
                     ),
                     TextButton(
                       onPressed: () {
-                        clear(context,historyList,'historyList');
+                        clear(context, historyList, 'historyList');
                         Navigator.pop(context);
                       },
                       child: const Text(
@@ -697,6 +570,8 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
               );
             },
           ),
+          IconButton(
+              onPressed: deleteDocuments, icon: const Icon(Icons.delete_sweep))
         ],
         backgroundColor: Colors.red.shade700,
         title: const Text('الأخبار'),
