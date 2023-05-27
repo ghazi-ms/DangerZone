@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:platform_device_id/platform_device_id.dart';
 
 class FireBaseHelper {
@@ -22,6 +25,51 @@ class FireBaseHelper {
     print(_deviceId);
   }
 
+  Future<void> clearData(dynamic list, String listName ) async {
+    final firestore = FirebaseFirestore.instance;
+
+    // Iterate over the historyList and delete corresponding documents from Firestore
+    list.forEach((element) async {
+      await firestore
+          .collection('dangerZones')
+          .doc(_deviceId)
+          .collection(listName)
+          .where('id', isEqualTo: element['id'].toString())
+          .get()
+          .then((snapshot) {
+        for (final doc in snapshot.docs) {
+          doc.reference.delete();
+        }
+      });
+    });
+    // Clear the historyList
+
+  }
+
+  Future<void> loadData(dynamic list, String type) async {
+
+    await _dangerZonesRef.doc().get().then((_) async {
+      switch (type) {
+        case "circle":
+          await _loadCircles(list);
+          print('1');
+          break;
+        case "polygon":
+          await _loadPolygons(list);
+          print('2');
+          break;
+        case "history":
+          await _loadHistoryList(list);
+          print('3');
+          break;
+        case "dangerData":
+          await _loadDangerZonesData(list);
+          print('4');
+          break;
+      }
+    });
+
+  }
   Future<void> uploadData(dynamic list, String type) async {
     switch (type) {
       case "circle":
@@ -43,6 +91,121 @@ class FireBaseHelper {
     }
   }
 
+  Future<void> _loadDangerZonesData(dynamic dangerZonesData) async {
+    QuerySnapshot querySnapshot =
+        await _dangerZonesRef.doc(_deviceId).collection('dangerZonesData').get();
+
+    List<Map<String, dynamic>> newDangerZones = [];
+
+    querySnapshot.docs.forEach((element) {
+      Map data = element.data() as Map;
+
+      bool found = dangerZonesData
+          .any((item) => item['id'].toString() == data['id'].toString());
+
+      if (!found) {
+        newDangerZones.add({
+          'Coordinates': data['Coordinates'],
+          'Locations': data['Locations'],
+          'description': data['description'],
+          'id': data['id'],
+          'timeStamp': data['timeStamp'],
+          'title': data['title'],
+          'newsSource': data['newsSource']
+        });
+      }
+    });
+
+    dangerZonesData.addAll(newDangerZones);
+
+  }
+
+  Future<void> _loadCircles(dynamic circles) async {
+    QuerySnapshot querySnapshot =
+        await _dangerZonesRef.doc(_deviceId).collection('circles').get();
+
+    List<Circle> newCircles = [];
+
+    querySnapshot.docs.forEach((element) {
+      Map data = element.data() as Map;
+
+      bool found = circles.any(
+          (circle) => circle.circleId.value == data['circleId'].toString());
+
+      if (!found) {
+        List<dynamic> center = jsonDecode(data['center']);
+        double latitude = double.parse(center[0].toString());
+        double longitude = double.parse(center[1].toString());
+        Circle tempCircle = Circle(
+          circleId: CircleId(data['circleId'].toString()),
+          center: LatLng(latitude, longitude),
+          radius: double.parse(data['radius'].toString()),
+        );
+
+        newCircles.add(tempCircle);
+      }
+    });
+
+    circles.addAll(newCircles);
+
+  }
+
+  Future<void> _loadPolygons(dynamic polygons) async {
+    QuerySnapshot querySnapshot =
+        await _dangerZonesRef.doc(_deviceId).collection('polygons').get();
+
+    List<Polygon> newPolygons = [];
+
+    querySnapshot.docs.forEach((element) {
+      Map data = element.data() as Map;
+
+      bool found = polygons.any(
+          (polygon) => polygon.polygonId.value == data['polygonId'].toString());
+
+      if (!found) {
+        List<dynamic> coordinates = jsonDecode(data['coordinates']);
+        List<LatLng> latLngList = coordinates
+            .map((coord) => LatLng(
+                  coord[0] as double, // latitude
+                  coord[1] as double, // longitude
+                ))
+            .toList();
+
+        Polygon tempPoly = Polygon(
+          polygonId: PolygonId(data['polygonId']),
+          points: latLngList,
+        );
+
+        newPolygons.add(tempPoly);
+      }
+    });
+
+    polygons.addAll(newPolygons);
+
+  }
+  Future<void> _loadHistoryList(dynamic historyList) async {
+    QuerySnapshot querySnapshot =
+        await _dangerZonesRef.doc(_deviceId).collection('historyList').get();
+
+    List<Map<String, String>> newHistoryList = [];
+
+    querySnapshot.docs.forEach((element) {
+      Map data = element.data() as Map;
+
+      bool found = historyList
+          .any((item) => item['id'].toString() == data['id'].toString());
+
+      if (!found) {
+        newHistoryList.add({
+          'id': data['id'].toString(),
+          'position': data['position'].toString(),
+        });
+      }
+    });
+
+    historyList.addAll(newHistoryList);
+
+  }
   Future<void> _uploadDangerZonesData(dynamic dangerZonesData) async {
     for (int i = 0; i < dangerZonesData.length; i++) {
       _dangerZonesRef

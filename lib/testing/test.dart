@@ -72,20 +72,19 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     fetchingLocation();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      fetchDangerZones();
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        // Load existing data from the Firebase collection
-        loadDataToListFromBase();
-      });
+      // Load existing data from the Firebase collection
+        loadDataToList();
+    });
+      // fetchDangerZones();
     });
   }
 
   Future<void> fetchDangerZones() async {
     showNotification();
-    await fetchDangerZoneData();
+    // await fetchDangerZoneData();
     updateUI();
+    await loadDataToList();
     uploadToFirebase();
   }
 
@@ -347,8 +346,6 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
       });
       uploadToFirebase();
     }
-
-
   }
 
   Future<void> uploadToFirebase() async {
@@ -362,156 +359,25 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
 
 //Load Data from Firebase
 
-  Future<void> loadDataToListFromBase() async {
-    // await dangerZonesRef.doc().get().then((_) async {
-    //   await loadCircles();
-    //   await loadDangerZonesData();
-    //   await loadPolygons();
-    //   await loadHistoryList();
-    // });
-  }
+  Future<void> loadDataToList() async {
+    print("loading0");
+    await fireBaseHelper?.loadData(dangerZonesData, 'dangerData');
+    await fireBaseHelper?.loadData(circles, 'circle');
+    await fireBaseHelper?.loadData(polygons, 'polygon');
+    await fireBaseHelper?.loadData(historyList, 'history');
 
-  Future<void> loadDangerZonesData() async {
-    // QuerySnapshot querySnapshot =
-    //     await dangerZonesRef.doc(deviceId).collection('dangerZonesData').get();
-    //
-    // List<Map<String, dynamic>> newDangerZones = [];
-    //
-    // querySnapshot.docs.forEach((element) {
-    //   Map data = element.data() as Map;
-    //
-    //   bool found = dangerZonesData
-    //       .any((item) => item['id'].toString() == data['id'].toString());
-    //
-    //   if (!found) {
-    //     newDangerZones.add({
-    //       'Coordinates': data['Coordinates'],
-    //       'Locations': data['Locations'],
-    //       'description': data['description'],
-    //       'id': data['id'],
-    //       'timeStamp': data['timeStamp'],
-    //       'title': data['title'],
-    //       'newsSource': data['newsSource']
-    //     });
-    //   }
-    // });
-    //
-    // setState(() {
-    //   dangerZonesData.addAll(newDangerZones);
-    // });
-  }
-
-  Future<void> loadCircles() async {
-    // QuerySnapshot querySnapshot =
-    //     await dangerZonesRef.doc(deviceId).collection('circles').get();
-    //
-    // List<Circle> newCircles = [];
-    //
-    // querySnapshot.docs.forEach((element) {
-    //   Map data = element.data() as Map;
-    //
-    //   bool found = circles.any(
-    //       (circle) => circle.circleId.value == data['circleId'].toString());
-    //
-    //   if (!found) {
-    //     List<dynamic> center = jsonDecode(data['center']);
-    //     double latitude = double.parse(center[0].toString());
-    //     double longitude = double.parse(center[1].toString());
-    //     Circle tempCircle = Circle(
-    //       circleId: CircleId(data['circleId'].toString()),
-    //       center: LatLng(latitude, longitude),
-    //       radius: double.parse(data['radius'].toString()),
-    //     );
-    //
-    //     newCircles.add(tempCircle);
-    //   }
-    // });
-    //
-    // setState(() {
-    //   circles.addAll(newCircles);
-    // });
-  }
-
-  Future<void> loadPolygons() async {
-    // QuerySnapshot querySnapshot =
-    //     await dangerZonesRef.doc(deviceId).collection('polygons').get();
-    //
-    // List<Polygon> newPolygons = [];
-    //
-    // querySnapshot.docs.forEach((element) {
-    //   Map data = element.data() as Map;
-    //
-    //   bool found = polygons.any(
-    //       (polygon) => polygon.polygonId.value == data['polygonId'].toString());
-    //
-    //   if (!found) {
-    //     List<dynamic> coordinates = jsonDecode(data['coordinates']);
-    //     List<LatLng> latLngList = coordinates
-    //         .map((coord) => LatLng(
-    //               coord[0] as double, // latitude
-    //               coord[1] as double, // longitude
-    //             ))
-    //         .toList();
-    //
-    //     Polygon tempPoly = Polygon(
-    //       polygonId: PolygonId(data['polygonId']),
-    //       points: latLngList,
-    //     );
-    //
-    //     newPolygons.add(tempPoly);
-    //   }
-    // });
-    //
-    // setState(() {
-    //   polygons.addAll(newPolygons);
-    // });
-  }
-
-  Future<void> loadHistoryList() async {
-    // QuerySnapshot querySnapshot =
-    //     await dangerZonesRef.doc(deviceId).collection('historyList').get();
-    //
-    // List<Map<String, String>> newHistoryList = [];
-    //
-    // querySnapshot.docs.forEach((element) {
-    //   Map data = element.data() as Map;
-    //
-    //   bool found = historyList
-    //       .any((item) => item['id'].toString() == data['id'].toString());
-    //
-    //   if (!found) {
-    //     newHistoryList.add({
-    //       'id': data['id'].toString(),
-    //       'position': data['position'].toString(),
-    //     });
-    //   }
-    // });
-    //
-    // setState(() {
-    //   historyList.addAll(newHistoryList);
-    // });
-  }
-
-  Future<void> clear(BuildContext context) async {
-    final firestore = FirebaseFirestore.instance;
-
-    // Iterate over the historyList and delete corresponding documents from Firestore
-    historyList.forEach((element) async {
-      await firestore
-          .collection('dangerZones')
-          .doc(deviceId)
-          .collection('historyList')
-          .where('id', isEqualTo: element['id'].toString())
-          .get()
-          .then((snapshot) {
-        for (final doc in snapshot.docs) {
-          doc.reference.delete();
-        }
-      });
-    });
-    // Clear the historyList
     setState(() {
-      historyList.clear();
+      historyList;
+      dangerZonesData;
+    });
+
+  }
+
+  Future<void> clear(BuildContext context, dynamic list,String listName) async {
+    fireBaseHelper?.clearData(list,listName);
+
+    setState(() {
+      list.clear();
     });
     showClearSnackbar(context);
   }
@@ -633,7 +499,9 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
 
   void callServerFunction() {
     fetchDangerZones();
-    loadDataToListFromBase();
+    setState(() {
+      loadDataToList();
+    });
   }
 
   void cancelTimerServer() {
@@ -662,7 +530,9 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Loads data from the base when the application is resumed.
-      loadDataToListFromBase();
+      setState(() {
+        loadDataToList();
+      });
     }
     if (state == AppLifecycleState.paused) {
       // Uploads data to Firebase when the application is paused.
@@ -743,7 +613,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
                     ),
                     TextButton(
                       onPressed: () {
-                        clear(context);
+                        clear(context,historyList,'historyList');
                         Navigator.pop(context);
                       },
                       child: const Text(
