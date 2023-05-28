@@ -16,16 +16,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:updated_grad/serivces/location_permission.dart';
 import 'package:updated_grad/serivces/backend_data_fetch.dart';
 
-/// The Geofence widget.
+/// The Geofence class .
 class Geofence extends StatefulWidget {
   const Geofence({super.key});
 
   @override
-  _GeofenceState createState() => _GeofenceState();
+  GeofenceState createState() => GeofenceState();
 }
 
-/// The state of the Geofence widget.
-class _GeofenceState extends State<Geofence> with WidgetsBindingObserver {
+/// The main class of the Geofence class.
+class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   List<Map<String, String>> historyList = [];
   final List<dynamic> dangerZonesData = [];
   late String notificationBody = "";
@@ -40,7 +40,6 @@ class _GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   late Timer _timerList;
   Set<Circle> circles = {};
   Set<Polygon> polygons = {};
-
   FireBaseHelper? fireBaseHelper;
 
   @override

@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart';
 
+///a class to connect to the [_apiEndpoint] and returns [_respone_status] and [_response_message] to determine the result of the connection.
+///* must have a working [_apiEndpoint].
 class BackendDataFetch {
   late int _respone_status;
   late String _response_message;
@@ -9,7 +11,7 @@ class BackendDataFetch {
       "https://backendgradproject-z9mv-master-gtgu5kzprq-wl.a.run.app/";
 
   BackendDataFetch();
-
+  /// function that connects to the backend server to get the latest [dangerZonesData].
   Future<Map<String, dynamic>> fetchDangerZoneData(
       dynamic dangerZonesData) async {
     try {
@@ -33,7 +35,7 @@ class BackendDataFetch {
     }
     return {"message": _response_message, "status": _respone_status};
   }
-
+  /// function that takes [dangerZonesData] and [data] to add the new data elements to the [dangerZonesData] list.
   void processDangerZoneData(
       dynamic dangerZonesData, List<Map<String, dynamic>> data) {
     data.forEach((Map<String, dynamic> newData) {
