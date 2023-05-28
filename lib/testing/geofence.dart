@@ -16,14 +16,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:updated_grad/serivces/location_permission.dart';
 import 'package:updated_grad/serivces/backend_data_fetch.dart';
 
-class Test extends StatefulWidget {
-  const Test({super.key});
+/// The Geofence widget.
+class Geofence extends StatefulWidget {
+  const Geofence({super.key});
 
   @override
-  _TestState createState() => _TestState();
+  _GeofenceState createState() => _GeofenceState();
 }
 
-class _TestState extends State<Test> with WidgetsBindingObserver {
+/// The state of the Geofence widget.
+class _GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   List<Map<String, String>> historyList = [];
   final List<dynamic> dangerZonesData = [];
   late String notificationBody = "";
@@ -75,6 +77,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     });
   }
 
+  /// Fetches danger zone data from the backend.
   Future<void> fetchDangerZones() async {
     showSnackBar('يتم استرجاع مناطق الخطر الجديدة');
     BackendDataFetch backendFetch = BackendDataFetch();
@@ -96,6 +99,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     showSnackBar(response['message']);
   }
 
+  /// Updates the polygons based on the retrieved data.
   void updatePolygons() {
     final polygonsTemp = <Polygon>{};
     for (final item in dangerZonesData) {
@@ -137,6 +141,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
+  /// Updates the circles displayed on the map.
   void updateCircles() {
     for (final item in dangerZonesData) {
       final coordinates = item['Coordinates'];
@@ -158,6 +163,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
+  /// function shows a SnackBar for each message received.
   void showSnackBar(String message) {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     scaffoldMessenger.showSnackBar(
@@ -167,6 +173,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     );
   }
 
+  /// function to fetch the current location
   Future<void> fetchingLocation() async {
     // Create a Location instance.
     Location location = Location();
@@ -180,6 +187,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     });
   }
 
+  /// function to to be triggered if the user changes his location
   void _handleLocationChange(currentLatitude, currentLongitude) {
     bool isInsideGeofence = _isPositionInsideGeofence(
       currentLatitude,
@@ -197,6 +205,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
+  /// function to check if the user is inside any geofence's
   bool _isPositionInsideGeofence(currentLatitude, currentLongitude) {
     bool isInsideCircle =
         _isPositionInsideCircles(currentLatitude, currentLongitude);
@@ -206,6 +215,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     return isInsideCircle || isInsidePolygon;
   }
 
+  /// function to check if the user is inside a circle geofence
   bool _isPositionInsideCircles(currentLatitude, currentLongitude) {
     for (Circle circle in circles) {
       double distance = Geolocator.distanceBetween(
@@ -224,6 +234,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     return false;
   }
 
+  /// function to check if the user is inside a polygon geofence
   bool _isPositionInsidePolygons(
       double currentLatitude, double currentLongitude) {
     for (Polygon polygon in polygons) {
@@ -258,10 +269,12 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     return false;
   }
 
+  /// function to check if the given polygon id is in the history list
   bool _isPolygonIdInHistoryList(String polygonId) {
     return historyList.any((element) => element['id'] == polygonId);
   }
 
+  /// function to add the given id of an geofence and the current user location to the history list
   void _addToHistoryList(String id, double latitude, double longitude) {
     final existingHistoryIds =
         Set<String>.from(historyList.map((item) => item['id'].toString()));
@@ -277,6 +290,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
+  /// function that calls the upload methods inside the fireBaseHelper to upload all the lists to the firebase
   Future<void> uploadToFirebase() async {
     fireBaseHelper?.uploadData(dangerZonesData, 'dangerData');
     fireBaseHelper?.uploadData(circles, 'circle');
@@ -284,8 +298,8 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     fireBaseHelper?.uploadData(historyList, 'history');
   }
 
-//Load Data from Firebase
 
+  ///function to Load Data from Firebase
   Future<void> loadDataToList() async {
     await fireBaseHelper?.loadData(dangerZonesData, 'dangerData');
     await fireBaseHelper?.loadData(circles, 'circle');
@@ -298,6 +312,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     });
   }
 
+  /// function to clear the history list and clears the history from the firebase
   Future<void> clear(
       BuildContext context, dynamic list, String listName) async {
     fireBaseHelper?.clearData(list, listName);
@@ -308,6 +323,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     showSnackBar('!تم مسح جميع مناطق الخطر');
   }
 
+  /// function to delete all the danger zone data and geofence's from the firebase and the local lists
   Future<void> deleteDocuments() async {
     var deletedIds = await fireBaseHelper?.deleteDocuments();
     removeItemFromHistoryList(deletedIds as List<String>);
@@ -316,23 +332,27 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     removePolygonItem(deletedIds as List<String>);
   }
 
+  /// function to delete all deleted ids that are 24 hours old from the history list
   void removeItemFromHistoryList(List<String> deletedIds) async {
     for (var id in deletedIds) {
       historyList.removeWhere((element) => element['id'] == id);
     }
   }
+  /// function to delete all deleted ids that are 24 hours old from the dangerZonesData list
 
   void removeItemFromDangerZonesData(List<String> deletedIds) {
     for (var id in deletedIds) {
       dangerZonesData.removeWhere((element) => element['id'] == id);
     }
   }
+  /// function to delete all deleted ids that are 24 hours old from the circles list
 
   void removeCircleItem(List<String> deletedIds) {
     for (var id in deletedIds) {
       circles.removeWhere((element) => element.circleId.value.toString() == id);
     }
   }
+  /// function to delete all deleted ids that are 24 hours old from the polygons list
 
   void removePolygonItem(List<String> deletedIds) {
     for (var id in deletedIds) {
@@ -341,6 +361,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
+  /// function to show a notification when the user enters a geofence
   void _onEnterGeofence() {
     NotificationService.showBigTextNotification(
       title: "لقد دخلت في منطقة خطرة!",
@@ -349,6 +370,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     );
   }
 
+  /// function to show a notification when the user exits a geofence
   void _onExitGeofence() {
     NotificationService.showBigTextNotification(
       title: "أنت في أمان!",
@@ -357,6 +379,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     );
   }
 
+  /// Loads the initial value of 'minutes' from shared preferences.
   Future<void> loadMinutes() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -369,6 +392,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     }
   }
 
+  /// saves the initial value of 'minutes' from shared preferences.
   Future<void> saveMinutes() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -397,6 +421,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     _timerServer.cancel();
   }
 
+  /// Starts the timer that updates the danger zone list every minute.
   void startTimerList() {
     const listHours = Duration(seconds: 24);
     _timerList = Timer.periodic(
@@ -413,6 +438,7 @@ class _TestState extends State<Test> with WidgetsBindingObserver {
     _timerList.cancel();
   }
 
+  /// to call specific functions on the change of app state
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
