@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:updated_grad/widgets/DangerEventCard.dart';
 
 class Cards extends StatefulWidget {
+  /// A list of history items.
   List<Map<String, String>> historyList = [];
+
+  /// A list of data items.
   List<dynamic> dataList = [''];
 
+  /// Constructs a [Cards] widget.
   Cards(this.historyList, this.dataList, {Key? key}) : super(key: key);
 
   @override
@@ -17,13 +21,12 @@ class _CardsState extends State<Cards> {
 
   @override
   Widget build(BuildContext context) {
+    /// Returns the widgets that describe the configuration of the user interface.
     final mediaQuery = MediaQuery.of(context);
     final rawScreenHeight = mediaQuery.size.height;
     const appBarHeight = kToolbarHeight;
-
     final statusBarHeight = mediaQuery.padding.top;
     final buttonBarHeight = mediaQuery.padding.bottom;
-
     final screenHeight = rawScreenHeight -
         appBarHeight -
         statusBarHeight -
@@ -31,54 +34,58 @@ class _CardsState extends State<Cards> {
         mediaQuery.systemGestureInsets.top.toDouble() -
         mediaQuery.systemGestureInsets.bottom.toDouble();
 
-    for (var element in widget.historyList) {
-      for (var dataListObject in widget.dataList) {
-        if (dataListObject['id'].toString() == element['id'].toString()) {
-          // Check if the ID already exists in matchedList
-          bool idExists = false;
-          for (var matchedObject in matchedList) {
-            if (matchedObject['id'] == element['id'].toString()) {
-              idExists = true;
-              break;
+    /// function to build the [matchedList] from the [historyList] and [dataList] based on matched ids.
+    void listBuilder(){
+      for (var element in widget.historyList) {
+        for (var dataListObject in widget.dataList) {
+          if (dataListObject['id'].toString() == element['id'].toString()) {
+            // Check if the ID already exists in matchedList
+            bool idExists = false;
+            for (var matchedObject in matchedList) {
+              if (matchedObject['id'] == element['id'].toString()) {
+                idExists = true;
+                break;
+              }
             }
-          }
-          if (!idExists) {
-            matchedList.insert(0, {
-              'title': dataListObject['title'],
-              'description': dataListObject['description'],
-              'timeStamp': dataListObject['timeStamp'],
-              'id': element['id'].toString(),
-              'position': element['position'].toString(),
-              'newsSource': dataListObject['newsSource'].toString()
-            });
+            if (!idExists) {
+              matchedList.insert(0, {
+                'title': dataListObject['title'],
+                'description': dataListObject['description'],
+                'timeStamp': dataListObject['timeStamp'],
+                'id': element['id'].toString(),
+                'position': element['position'].toString(),
+                'newsSource': dataListObject['newsSource'].toString()
+              });
+            }
           }
         }
       }
     }
-
+    listBuilder();
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: 100,
-              maxHeight: screenHeight,
-            ),
-            child: ListView.builder(
-              itemCount: matchedList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(23, 16, 23, 16),
-                  child: DangerEventCard(
-                    title: matchedList[index]['title'],
-                    description: matchedList[index]['description'],
-                    timestamp: matchedList[index]['timeStamp'],
-                    coordinate: matchedList[index]['position'],
-                    id: matchedList[index]['id'],
-                    newsSource: matchedList[index]['newsSource'],
-                  ),
-                );
-              },
-            ));
+          constraints: BoxConstraints(
+            minHeight: 100,
+            maxHeight: screenHeight,
+          ),
+          child: ListView.builder(
+            itemCount: matchedList.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(23, 16, 23, 16),
+                child: DangerEventCard(
+                  title: matchedList[index]['title'],
+                  description: matchedList[index]['description'],
+                  timestamp: matchedList[index]['timeStamp'],
+                  coordinate: matchedList[index]['position'],
+                  id: matchedList[index]['id'],
+                  newsSource: matchedList[index]['newsSource'],
+                ),
+              );
+            },
+          ),
+        );
       },
     );
   }

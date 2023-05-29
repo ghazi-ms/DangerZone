@@ -3,6 +3,7 @@ import 'package:maps_launcher/maps_launcher.dart';
 import 'DescriptionPage.dart';
 
 class DangerEventCard extends StatefulWidget {
+  /// Constructs a [DangerEventCard] widget.
   const DangerEventCard({
     Key? key,
     required this.title,
@@ -48,7 +49,7 @@ class DangerEventCardState extends State<DangerEventCard>
     _animationController.dispose();
     super.dispose();
   }
-
+  /// Launches maps application with the provided coordinates.
   Future<void> reDirectToMaps(String coordinates) async {
     MapsLauncher.launchQuery(coordinates);
   }

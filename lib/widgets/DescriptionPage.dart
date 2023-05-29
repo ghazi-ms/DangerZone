@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+/// class that takes [title] and [description] to display on a separate page.
 class DescriptionPage extends StatelessWidget {
   final String title;
   final String description;

@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
+  /// function to initialize the settings and the plugins of the notification.
   static Future initialize(
       FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
     var androidInitialize =
@@ -12,7 +13,7 @@ class NotificationService {
         new InitializationSettings(android: androidInitialize);
     await flutterLocalNotificationsPlugin.initialize(initializationsSettings);
   }
-
+  /// function that shows the notification takes [title] and [body] to show.
   static Future showBigTextNotification(
       {var id = 0,
       required String title,
@@ -31,7 +32,7 @@ class NotificationService {
     var not = NotificationDetails(android: androidPlatformChannelSpecifics);
     await fln.show(0, title, body, not);
   }
-
+  ///function to check if the user granted the notification permission to the app.
   static Future<void> requestNotificationPermission(
       BuildContext context) async {
     final PermissionStatus status = await Permission.notification.request();

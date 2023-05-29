@@ -1,5 +1,5 @@
 import 'package:location/location.dart';
-
+///function to check if the user granted permission to the location services.
 Future<void> ensureLocationServiceEnabled(Location location) async {
   bool _serviceEnabled;
   PermissionStatus _permissionGranted;

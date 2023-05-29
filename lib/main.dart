@@ -11,7 +11,7 @@ void main() async {
 
   runApp(MyApp());
 }
-
+///main class builder contains [AnimatedSplashScreen] that shows the app icon.
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

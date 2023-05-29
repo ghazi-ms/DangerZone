@@ -140,7 +140,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     }
   }
 
-  /// Updates the circles displayed on the map.
+  /// Updates the circles list.
   void updateCircles() {
     for (final item in dangerZonesData) {
       final coordinates = item['Coordinates'];
@@ -304,7 +304,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     await fireBaseHelper?.loadData(circles, 'circle');
     await fireBaseHelper?.loadData(polygons, 'polygon');
     await fireBaseHelper?.loadData(historyList, 'history');
-
     setState(() {
       historyList;
       dangerZonesData;
