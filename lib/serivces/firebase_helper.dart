@@ -217,7 +217,7 @@ class FireBaseHelper {
           'id': data['id'],
           'timeStamp': data['timeStamp'],
           'title': data['title'],
-          'newsSource': data['newsSource']
+          'newsSource': data['newsSource'],
         });
       }
     }
@@ -341,7 +341,7 @@ class FireBaseHelper {
             'id': dangerZonesData[i]['id'].toString(),
             'timeStamp': dangerZonesData[i]['timeStamp'].toString(),
             'Locations': dangerZonesData[i]['Locations'].toString(),
-            'newsSource': dangerZonesData[i]['newsSource'].toString()
+            'newsSource': dangerZonesData[i]['newsSource'].toString(),
           });
         }
       });

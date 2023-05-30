@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -34,7 +35,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   String? deviceId;
   bool _isInsideGeofence = false;
   final distanceFilter = 50;
-  static const int tolerance = 100;
+  static const int tolerance = 400;
   late int minutes;
   late Timer _timerServer;
   late Timer _timerList;
@@ -101,7 +102,9 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   void updatePolygons() {
     final polygonsTemp = <Polygon>{};
     for (final item in dangerZonesData) {
-      List coordinates = item['Coordinates'];
+
+      List coordinates = jsonDecode(item['Coordinates']);
+      print(coordinates.first[0]);
       final points = <LatLng>[];
       if (coordinates.length > 2) {
         for (var coordinate in coordinates) {
@@ -261,15 +264,9 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
         polygonLatLngs,
         true,
       );
-      bool allowedDistance = maps_toolkit.PolygonUtil.isLocationOnEdge(
-        positionLatLng,
-        polygonLatLngs,
-        tolerance: tolerance,
-        true,
-      );
 
-      if ((isInsidePolygon == false && allowedDistance == true) ||
-          isInsidePolygon == true) {
+
+      if (isInsidePolygon) {
         if (!_isPolygonIdInHistoryList(polygon.polygonId.value)) {
           _addToHistoryList(
             polygon.polygonId.value,
@@ -283,6 +280,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
         // Extract the title from the found element to be used for notification.
         notificationBody =
         foundElement.isNotEmpty ? foundElement.first['title'] : "null";
+
         return true;
       }
     }
@@ -619,10 +617,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
               );
             },
           ),
-          IconButton(
-            onPressed: deleteDocuments,
-            icon: const Icon(Icons.delete_sweep),
-          ),
+
         ],
         backgroundColor: Colors.red.shade700,
         title: const Text('الأخبار'),

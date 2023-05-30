@@ -57,6 +57,7 @@ class BackendDataFetch {
       );
       if (!idExists) {
         dangerZonesData.add(newData);
+        print(newData['Coordinates'].first);
       }
     });
   }

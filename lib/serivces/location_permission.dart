@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:location/location.dart';
-///function to check if the user granted permission to the location services.
+
+/// Function to check if the user granted permission to the location services.
 Future<void> ensureLocationServiceEnabled(Location location) async {
   bool _serviceEnabled;
   PermissionStatus _permissionGranted;
@@ -9,7 +11,8 @@ Future<void> ensureLocationServiceEnabled(Location location) async {
   if (!_serviceEnabled) {
     _serviceEnabled = await location.requestService();
     if (!_serviceEnabled) {
-      return;
+      exit(0); // Close the app if location service is not enabled.
+
     }
   }
 
@@ -18,7 +21,8 @@ Future<void> ensureLocationServiceEnabled(Location location) async {
   if (_permissionGranted == PermissionStatus.denied) {
     _permissionGranted = await location.requestPermission();
     if (_permissionGranted != PermissionStatus.granted) {
-      return;
+      exit(0); // Close the app if location permission is not granted.
+
     }
   }
 
