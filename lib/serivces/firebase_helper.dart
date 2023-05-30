@@ -264,16 +264,12 @@ class FireBaseHelper {
   Future<void> _loadPolygons(dynamic polygons) async {
     QuerySnapshot querySnapshot =
         await _dangerZonesRef.doc(_deviceId).collection('polygons').get();
-
     List<Polygon> newPolygons = [];
-
     for (var element in querySnapshot.docs) {
       Map data = element.data() as Map;
-
       bool found = polygons.any(
         (polygon) => polygon.polygonId.value == data['polygonId'].toString(),
       );
-
       if (!found) {
         List<dynamic> coordinates = jsonDecode(data['coordinates']);
         List<LatLng> latLngList = coordinates
@@ -282,7 +278,6 @@ class FireBaseHelper {
                   double.parse(coordinate[1].toString()), // longitude
                 ))
             .toList();
-
         Polygon tempPoly = Polygon(
           polygonId: PolygonId(data['polygonId']),
           points: latLngList,
@@ -389,7 +384,7 @@ class FireBaseHelper {
           .doc();
       batch.set(documentRef, {
         'polygonId': polygon.polygonId.value.toString(),
-        'coordinates': jsonEncode(coordinatesList),
+        'coordinates': coordinatesList.toString(),
       });
     }
 
@@ -417,7 +412,7 @@ class FireBaseHelper {
             .doc();
         batch.set(documentRef, {
           'polygonId': polygon.polygonId.value.toString(),
-          'coordinates': jsonEncode(coordinatesList),
+          'coordinates': coordinatesList.toString(),
         });
       }
     }

@@ -175,7 +175,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   Future<void> fetchingLocation() async {
     // Create a Location instance.
     Location location = Location();
-
     await ensureLocationServiceEnabled(location);
 
     // Listen to location changes and determine if the current location is inside a geofence.
@@ -230,7 +229,13 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
           currentLatitude,
           currentLongitude,
         );
+        // Find the corresponding danger zone element based on the circle ID.
+        var foundElement = dangerZonesData.where((element) =>
+        element['id'].toString() == circle.circleId.value.toString());
 
+        // Extract the title from the found element to be used for notification.
+        notificationBody =
+        foundElement.isNotEmpty ? foundElement.first['title'] : "null";
         return true;
       }
     }
@@ -272,7 +277,12 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
             currentLongitude,
           );
         }
+        var foundElement = dangerZonesData.where((element) =>
+        element['id'].toString() == polygon.polygonId.value.toString());
 
+        // Extract the title from the found element to be used for notification.
+        notificationBody =
+        foundElement.isNotEmpty ? foundElement.first['title'] : "null";
         return true;
       }
     }
@@ -572,8 +582,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
                             minutes = value;
                           },
                           enableOnOutOfConstraintsAnimation: true,
-                          onOutOfConstraints: () =>
-                              print("This value is too high or too low"),
+
                         ),
                       ),
                       Row(
