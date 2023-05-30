@@ -131,7 +131,7 @@ class DangerEventCardState extends State<DangerEventCard>
                         Align(
                           alignment: Alignment.topRight,
                           child: Text(
-                            widget.title,
+                            "حريق منزل في منطقة الجبيهة",
                             textAlign: TextAlign.right,
                             style: const TextStyle(
                               color: Colors.white,

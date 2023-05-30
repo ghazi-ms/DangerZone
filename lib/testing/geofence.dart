@@ -102,8 +102,8 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   void updatePolygons() {
     final polygonsTemp = <Polygon>{};
     for (final item in dangerZonesData) {
-      List coordinates = jsonDecode(item['Coordinates']);
-
+      List coordinates = item['Coordinates'];
+      print(coordinates);
       final points = <LatLng>[];
       if (coordinates.length > 2) {
         for (var coordinate in coordinates) {
@@ -386,7 +386,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   void _onEnterGeofence() {
     NotificationService.showBigTextNotification(
       title: "لقد دخلت في منطقة خطرة!",
-      body: notificationBody,
+      body: "حريق منزل في منطقة الجبيهة",
       fln: flutterLocalNotificationsPlugin,
     );
   }
