@@ -84,7 +84,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     dynamic response = await backendFetch.fetchDangerZoneData(dangerZonesData);
     if (response['status'] == 200) {
       await loadDataToList();
-
       setState(() {
         dangerZonesData;
         historyList;
@@ -182,7 +181,9 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     // Listen to location changes and determine if the current location is inside a geofence.
     location.onLocationChanged.listen((LocationData currentLocation) {
       _handleLocationChange(
-          currentLocation.latitude, currentLocation.longitude);
+        currentLocation.latitude,
+        currentLocation.longitude,
+      );
     });
   }
 
@@ -225,7 +226,11 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
       );
       if (distance <= tolerance) {
         _addToHistoryList(
-            circle.circleId.value, currentLatitude, currentLongitude);
+          circle.circleId.value,
+          currentLatitude,
+          currentLongitude,
+        );
+
         return true;
       }
     }
@@ -235,7 +240,9 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
 
   /// function to check if the user is inside a polygon geofence
   bool _isPositionInsidePolygons(
-      double currentLatitude, double currentLongitude) {
+    double currentLatitude,
+    double currentLongitude,
+  ) {
     for (Polygon polygon in polygons) {
       List<maps_toolkit.LatLng> polygonLatLngs = polygon.points
           .map((point) => maps_toolkit.LatLng(point.latitude, point.longitude))
@@ -260,11 +267,16 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
           isInsidePolygon == true) {
         if (!_isPolygonIdInHistoryList(polygon.polygonId.value)) {
           _addToHistoryList(
-              polygon.polygonId.value, currentLatitude, currentLongitude);
+            polygon.polygonId.value,
+            currentLatitude,
+            currentLongitude,
+          );
         }
+
         return true;
       }
     }
+
     return false;
   }
 
@@ -297,7 +309,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     fireBaseHelper?.uploadData(historyList, 'history');
   }
 
-
   ///function to Load Data from Firebase
   Future<void> loadDataToList() async {
     await fireBaseHelper?.loadData(dangerZonesData, 'dangerData');
@@ -312,7 +323,10 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
 
   /// function to clear the history list and clears the history from the firebase
   Future<void> clear(
-      BuildContext context, dynamic list, String listName) async {
+    BuildContext context,
+    dynamic list,
+    String listName,
+  ) async {
     fireBaseHelper?.clearData(list, listName);
 
     setState(() {
@@ -336,6 +350,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
       historyList.removeWhere((element) => element['id'] == id);
     }
   }
+
   /// function to delete all deleted ids that are 24 hours old from the dangerZonesData list
 
   void removeItemFromDangerZonesData(List<String> deletedIds) {
@@ -343,6 +358,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
       dangerZonesData.removeWhere((element) => element['id'] == id);
     }
   }
+
   /// function to delete all deleted ids that are 24 hours old from the circles list
 
   void removeCircleItem(List<String> deletedIds) {
@@ -350,6 +366,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
       circles.removeWhere((element) => element.circleId.value.toString() == id);
     }
   }
+
   /// function to delete all deleted ids that are 24 hours old from the polygons list
 
   void removePolygonItem(List<String> deletedIds) {
@@ -419,9 +436,9 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     _timerServer.cancel();
   }
 
-  /// Starts the timer that updates the danger zone list every minute.
+  /// Starts the timer that updates the danger zone list every 24 hours.
   void startTimerList() {
-    const listHours = Duration(seconds: 24);
+    const listHours = Duration(hours: 24);
     _timerList = Timer.periodic(
       listHours,
       (Timer timer) => callListFunction(),
@@ -472,6 +489,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -539,11 +557,12 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
                         height: 70,
                         child: NumberSelection(
                           theme: NumberSelectionTheme(
-                              draggableCircleColor: Colors.red.shade300,
-                              iconsColor: Colors.white,
-                              numberColor: Colors.white,
-                              backgroundColor: Colors.red.shade900,
-                              outOfConstraintsColor: Colors.deepOrange),
+                            draggableCircleColor: Colors.red.shade300,
+                            iconsColor: Colors.white,
+                            numberColor: Colors.white,
+                            backgroundColor: Colors.red.shade900,
+                            outOfConstraintsColor: Colors.deepOrange,
+                          ),
                           initialValue: minutes,
                           minValue: 1,
                           maxValue: 60,
@@ -584,7 +603,7 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
                             ),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   );
                 },
@@ -592,7 +611,9 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
             },
           ),
           IconButton(
-              onPressed: deleteDocuments, icon: const Icon(Icons.delete_sweep))
+            onPressed: deleteDocuments,
+            icon: const Icon(Icons.delete_sweep),
+          ),
         ],
         backgroundColor: Colors.red.shade700,
         title: const Text('الأخبار'),

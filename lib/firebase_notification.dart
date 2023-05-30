@@ -4,13 +4,16 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 class FirebaseNotifications {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
   /// Initializes the FlutterLocalNotificationsPlugin with the appropriate settings.
   static void initialize() {
     const InitializationSettings initializationSettings =
         InitializationSettings(
-            android: AndroidInitializationSettings("@mipmap/ic_launcher"));
+      android: AndroidInitializationSettings("@mipmap/ic_launcher"),
+    );
     _notificationsPlugin.initialize(initializationSettings);
   }
+
   /// Shows a notification using the provided [message].
   ///
   /// Args:

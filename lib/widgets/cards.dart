@@ -35,7 +35,7 @@ class _CardsState extends State<Cards> {
         mediaQuery.systemGestureInsets.bottom.toDouble();
 
     /// function to build the [matchedList] from the [historyList] and [dataList] based on matched ids.
-    void listBuilder(){
+    void listBuilder() {
       for (var element in widget.historyList) {
         for (var dataListObject in widget.dataList) {
           if (dataListObject['id'].toString() == element['id'].toString()) {
@@ -54,14 +54,16 @@ class _CardsState extends State<Cards> {
                 'timeStamp': dataListObject['timeStamp'],
                 'id': element['id'].toString(),
                 'position': element['position'].toString(),
-                'newsSource': dataListObject['newsSource'].toString()
+                'newsSource': dataListObject['newsSource'].toString(),
               });
             }
           }
         }
       }
     }
+
     listBuilder();
+
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         return ConstrainedBox(

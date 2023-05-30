@@ -5,23 +5,24 @@ import 'package:permission_handler/permission_handler.dart';
 class NotificationService {
   /// function to initialize the settings and the plugins of the notification.
   static Future initialize(
-      FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin) async {
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin,
+  ) async {
     var androidInitialize =
-        new AndroidInitializationSettings('mipmap/ic_launcher');
+        const AndroidInitializationSettings('mipmap/ic_launcher');
 
     var initializationsSettings =
-        new InitializationSettings(android: androidInitialize);
+        InitializationSettings(android: androidInitialize);
     await flutterLocalNotificationsPlugin.initialize(initializationsSettings);
   }
+
   /// function that shows the notification takes [title] and [body] to show.
-  static Future showBigTextNotification(
-      {var id = 0,
-      required String title,
-      required String body,
-      var payload,
-      required FlutterLocalNotificationsPlugin fln}) async {
+  static Future showBigTextNotification({
+    required String title,
+    required String body,
+    required FlutterLocalNotificationsPlugin fln,
+  }) async {
     AndroidNotificationDetails androidPlatformChannelSpecifics =
-        new AndroidNotificationDetails(
+        const AndroidNotificationDetails(
       'you_can_name_it_whatever1',
       'channel_name',
       playSound: true,
@@ -32,9 +33,11 @@ class NotificationService {
     var not = NotificationDetails(android: androidPlatformChannelSpecifics);
     await fln.show(0, title, body, not);
   }
+
   ///function to check if the user granted the notification permission to the app.
   static Future<void> requestNotificationPermission(
-      BuildContext context) async {
+    BuildContext context,
+  ) async {
     final PermissionStatus status = await Permission.notification.request();
 
     if (status.isDenied ||
@@ -54,11 +57,12 @@ class NotificationService {
               onPressed: () => Navigator.of(context).pop(),
             ),
             ElevatedButton(
-                child: const Text('Open Settings'),
-                onPressed: () {
-                  openAppSettings();
-                  Navigator.of(context).pop();
-                }),
+              child: const Text('Open Settings'),
+              onPressed: () {
+                openAppSettings();
+                Navigator.of(context).pop();
+              },
+            ),
           ],
         ),
       );

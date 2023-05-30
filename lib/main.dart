@@ -11,21 +11,23 @@ void main() async {
 
   runApp(MyApp());
 }
+
 ///main class builder contains [AnimatedSplashScreen] that shows the app icon.
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'منطقة الخطر',
-        home: AnimatedSplashScreen(
-          splashIconSize: 300,
-          duration: 3000,
-          splash: Dangericon.logobackground,
-          nextScreen: Geofence(),
-          splashTransition: SplashTransition.fadeTransition,
-          pageTransitionType: PageTransitionType.bottomToTop,
-          backgroundColor: Colors.red.shade900,
-          centered: true,
-        ));
+      title: 'منطقة الخطر',
+      home: AnimatedSplashScreen(
+        splashIconSize: 300,
+        duration: 3000,
+        splash: Dangericon.logobackground,
+        nextScreen: Geofence(),
+        splashTransition: SplashTransition.fadeTransition,
+        pageTransitionType: PageTransitionType.bottomToTop,
+        backgroundColor: Colors.red.shade900,
+        centered: true,
+      ),
+    );
   }
 }

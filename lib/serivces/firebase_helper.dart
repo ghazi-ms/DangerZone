@@ -15,6 +15,7 @@ class FireBaseHelper {
   /// if the object is null it creates only one instance of it.
   factory FireBaseHelper() {
     _instance ??= FireBaseHelper._internal();
+
     return _instance!;
   }
 
@@ -116,14 +117,27 @@ class FireBaseHelper {
       _deletedIds.add(id);
       if (_isTimestampBeforeTwentyFourHours(timestamp, twentyFourHoursAgo)) {
         await _deleteDocumentsInCollection(
-            firestore, 'circles', id, 'circleId');
+          firestore,
+          'circles',
+          id,
+          'circleId',
+        );
         await _deleteDocumentsInCollection(
-            firestore, 'dangerZonesData', id, 'id');
+          firestore,
+          'dangerZonesData',
+          id,
+          'id',
+        );
         await _deleteDocumentsInCollection(firestore, 'historyList', id, 'id');
         await _deleteDocumentsInCollection(
-            firestore, 'polygons', id, 'polygonId');
+          firestore,
+          'polygons',
+          id,
+          'polygonId',
+        );
       }
     }
+
     return _deletedIds;
   }
 
@@ -133,7 +147,9 @@ class FireBaseHelper {
   /// The [twentyFourHoursAgo] is the DateTime object representing 24 hours ago.
   /// Returns true if the timestamp is before 24 hours ago; false otherwise.
   bool _isTimestampBeforeTwentyFourHours(
-      dynamic timestamp, DateTime twentyFourHoursAgo) {
+    dynamic timestamp,
+    DateTime twentyFourHoursAgo,
+  ) {
     if (timestamp is String) {
       // Convert the timestamp string to a DateTime object
       final dateFormat = DateFormat("MM/dd/yyyy, HH:mm:ss");
@@ -146,30 +162,36 @@ class FireBaseHelper {
       return timestamp.toDate().isBefore(twentyFourHoursAgo);
     } else {
       throw ArgumentError(
-          'Invalid timestamp type. Must be String or Timestamp.');
+        'Invalid timestamp type. Must be String or Timestamp.',
+      );
     }
   }
+
   /// Deletes documents from a Firestore collection based on the provided parameters.
   ///
   /// The [firestore] parameter is the Firestore instance.
   /// The [collectionName] parameter is the name of the collection to delete documents from.
   /// The [id] parameter is the ID of the document to delete.
   /// The [fieldName] parameter is the name of the field to match when deleting documents.
-  Future<void> _deleteDocumentsInCollection(FirebaseFirestore firestore,
-      String collectionName, String id, String fieldName) async {
+  Future<void> _deleteDocumentsInCollection(
+    FirebaseFirestore firestore,
+    String collectionName,
+    String id,
+    String fieldName,
+  ) async {
     final collectionRef = firestore
         .collection('dangerZones')
         .doc(_deviceId)
         .collection(collectionName);
 
-    final querySnapshot = await collectionRef
-        .where(fieldName, isEqualTo: id)
-        .get();
+    final querySnapshot =
+        await collectionRef.where(fieldName, isEqualTo: id).get();
 
     for (final doc in querySnapshot.docs) {
       await doc.reference.delete();
     }
   }
+
   /// Loads danger zones data from Firestore and updates the provided [dangerZonesData] list.
   /// It checks for existing danger zones in the list and adds new danger zones from Firestore.
   /// The [dangerZonesData] parameter is a list containing existing danger zones data.
@@ -208,7 +230,7 @@ class FireBaseHelper {
   /// The [circles] parameter is a list containing existing circle data.
   Future<void> _loadCircles(dynamic circles) async {
     QuerySnapshot querySnapshot =
-    await _dangerZonesRef.doc(_deviceId).collection('circles').get();
+        await _dangerZonesRef.doc(_deviceId).collection('circles').get();
 
     List<Circle> newCircles = [];
 
@@ -216,7 +238,8 @@ class FireBaseHelper {
       Map data = element.data() as Map;
 
       bool found = circles.any(
-              (circle) => circle.circleId.value == data['circleId'].toString());
+        (circle) => circle.circleId.value == data['circleId'].toString(),
+      );
 
       if (!found) {
         List<dynamic> center = jsonDecode(data['center']);
@@ -240,7 +263,7 @@ class FireBaseHelper {
   /// The [polygons] parameter is a list containing existing polygon data.
   Future<void> _loadPolygons(dynamic polygons) async {
     QuerySnapshot querySnapshot =
-    await _dangerZonesRef.doc(_deviceId).collection('polygons').get();
+        await _dangerZonesRef.doc(_deviceId).collection('polygons').get();
 
     List<Polygon> newPolygons = [];
 
@@ -248,15 +271,16 @@ class FireBaseHelper {
       Map data = element.data() as Map;
 
       bool found = polygons.any(
-              (polygon) => polygon.polygonId.value == data['polygonId'].toString());
+        (polygon) => polygon.polygonId.value == data['polygonId'].toString(),
+      );
 
       if (!found) {
         List<dynamic> coordinates = jsonDecode(data['coordinates']);
         List<LatLng> latLngList = coordinates
             .map((coordinate) => LatLng(
-          coordinate[0] as double, // latitude
-          coordinate[1] as double, // longitude
-        ))
+                  double.parse(coordinate[0].toString()), // latitude
+                  double.parse(coordinate[1].toString()), // longitude
+                ))
             .toList();
 
         Polygon tempPoly = Polygon(
@@ -276,7 +300,7 @@ class FireBaseHelper {
   /// The [historyList] parameter is a list containing existing history list data.
   Future<void> _loadHistoryList(dynamic historyList) async {
     QuerySnapshot querySnapshot =
-    await _dangerZonesRef.doc(_deviceId).collection('historyList').get();
+        await _dangerZonesRef.doc(_deviceId).collection('historyList').get();
 
     List<Map<String, String>> newHistoryList = [];
 
@@ -400,6 +424,7 @@ class FireBaseHelper {
 
     return batch.commit();
   }
+
   /// Uploads circle data to Firestore.
   /// The [circles] parameter is a list containing circles data to be uploaded.
   Future<void> _uploadCirclesData(dynamic circles) async {
@@ -416,13 +441,14 @@ class FireBaseHelper {
       await _addNewCirclesToFirebase(existingCircleIds, circles);
     }
   }
+
   /// Adds circles data to Firestore.
   /// The [circles] parameter is a list containing circles data to be added.
   Future<void> _addCirclesToFirebase(dynamic circles) {
     final batch = FirebaseFirestore.instance.batch();
     for (var circle in circles) {
       final documentRef =
-      _dangerZonesRef.doc(_deviceId.toString()).collection('circles').doc();
+          _dangerZonesRef.doc(_deviceId.toString()).collection('circles').doc();
       batch.set(documentRef, {
         'circleId': circle.circleId.value.toString(),
         'center': circle.center.toJson().toString(),
@@ -432,6 +458,7 @@ class FireBaseHelper {
 
     return batch.commit();
   }
+
   /// Adds new circles data to Firestore.
   /// The [existingCircleIds] parameter is a set of existing polygon IDs in Firestore.
   /// The [circles] parameter is a list containing new circles data to be added.
@@ -455,6 +482,7 @@ class FireBaseHelper {
 
     return batch.commit();
   }
+
   /// Uploads history data to Firestore.
   /// The [historyList] parameter is a list containing history data to be uploaded.
   Future<void> _uploadHistoryListData(dynamic historyList) async {
@@ -473,6 +501,7 @@ class FireBaseHelper {
       }
     });
   }
+
   /// Adds new history Item to Firestore.
   /// The [historyItem] parameter is a set of history [IDs] and [position] in Firestore.
   Future<void> _addHistoryItemToFirebase(
@@ -482,5 +511,4 @@ class FireBaseHelper {
       'position': historyItem['position'].toString(),
     });
   }
-
 }

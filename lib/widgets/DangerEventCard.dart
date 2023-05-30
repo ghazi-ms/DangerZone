@@ -49,6 +49,7 @@ class DangerEventCardState extends State<DangerEventCard>
     _animationController.dispose();
     super.dispose();
   }
+
   /// Launches maps application with the provided coordinates.
   Future<void> reDirectToMaps(String coordinates) async {
     MapsLauncher.launchQuery(coordinates);
@@ -56,7 +57,8 @@ class DangerEventCardState extends State<DangerEventCard>
 
   @override
   Widget build(BuildContext context) {
-    Map<String,String> translateList={"roya":"رؤيا","alghad":"الغد"};
+    Map<String, String> translateList = {"roya": "رؤيا", "alghad": "الغد"};
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (BuildContext context, Widget? child) {
@@ -146,9 +148,7 @@ class DangerEventCardState extends State<DangerEventCard>
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
-
                 children: [
-
                   Text(
                     widget.timestamp,
                     style: const TextStyle(
