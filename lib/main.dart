@@ -19,9 +19,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'منطقة الخطر',
       home: AnimatedSplashScreen(
-
         splashIconSize: 300,
         duration: 3000,
         splash: Dangericon.logobackground,

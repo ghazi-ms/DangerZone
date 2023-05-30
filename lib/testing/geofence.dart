@@ -102,9 +102,8 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   void updatePolygons() {
     final polygonsTemp = <Polygon>{};
     for (final item in dangerZonesData) {
-
       List coordinates = jsonDecode(item['Coordinates']);
-      print(coordinates.first[0]);
+
       final points = <LatLng>[];
       if (coordinates.length > 2) {
         for (var coordinate in coordinates) {
@@ -234,11 +233,11 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
         );
         // Find the corresponding danger zone element based on the circle ID.
         var foundElement = dangerZonesData.where((element) =>
-        element['id'].toString() == circle.circleId.value.toString());
+            element['id'].toString() == circle.circleId.value.toString());
 
         // Extract the title from the found element to be used for notification.
         notificationBody =
-        foundElement.isNotEmpty ? foundElement.first['title'] : "null";
+            foundElement.isNotEmpty ? foundElement.first['title'] : "null";
         return true;
       }
     }
@@ -265,7 +264,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
         true,
       );
 
-
       if (isInsidePolygon) {
         if (!_isPolygonIdInHistoryList(polygon.polygonId.value)) {
           _addToHistoryList(
@@ -275,11 +273,11 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
           );
         }
         var foundElement = dangerZonesData.where((element) =>
-        element['id'].toString() == polygon.polygonId.value.toString());
+            element['id'].toString() == polygon.polygonId.value.toString());
 
         // Extract the title from the found element to be used for notification.
         notificationBody =
-        foundElement.isNotEmpty ? foundElement.first['title'] : "null";
+            foundElement.isNotEmpty ? foundElement.first['title'] : "null";
 
         return true;
       }
@@ -580,7 +578,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
                             minutes = value;
                           },
                           enableOnOutOfConstraintsAnimation: true,
-
                         ),
                       ),
                       Row(
@@ -617,7 +614,6 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
               );
             },
           ),
-
         ],
         backgroundColor: Colors.red.shade700,
         title: const Text('الأخبار'),
