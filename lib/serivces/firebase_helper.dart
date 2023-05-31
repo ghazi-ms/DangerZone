@@ -331,11 +331,15 @@ class FireBaseHelper {
         // Check if the danger zone ID already exists in the Firebase collection
         if (existingIds.lookup(dangerZonesData[i]['id'].toString()) == null) {
           // Add the danger zone to the Firebase collection
+          List<dynamic> coordinates = dangerZonesData[i]['Coordinates'];
+          List<GeoPoint> geoPoints = coordinates
+              .map((coords) => GeoPoint(coords[0], coords[1]))
+              .toList();
           _dangerZonesRef
               .doc(_deviceId.toString())
               .collection('dangerZonesData')
               .add({
-            'Coordinates': dangerZonesData[i]['Coordinates'].toString(),
+            'Coordinates': geoPoints,
             'title': dangerZonesData[i]['title'].toString(),
             'description': dangerZonesData[i]['description'].toString(),
             'id': dangerZonesData[i]['id'].toString(),

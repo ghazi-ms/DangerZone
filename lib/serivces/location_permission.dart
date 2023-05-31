@@ -11,18 +11,17 @@ Future<void> ensureLocationServiceEnabled(Location location) async {
   if (!_serviceEnabled) {
     _serviceEnabled = await location.requestService();
     if (!_serviceEnabled) {
-      exit(0); // Close the app if location service is not enabled.
-
+      return;
     }
   }
 
   // Check if the app has location permission, and request it if not.
   _permissionGranted = await location.hasPermission();
-  if (_permissionGranted == PermissionStatus.denied) {
+  if (_permissionGranted == PermissionStatus.denied ||
+      _permissionGranted == PermissionStatus.deniedForever) {
     _permissionGranted = await location.requestPermission();
     if (_permissionGranted != PermissionStatus.granted) {
-      exit(0); // Close the app if location permission is not granted.
-
+      return;
     }
   }
 

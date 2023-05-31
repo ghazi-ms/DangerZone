@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 /// class that takes [title] and [description] to display on a separate page.
 class DescriptionPage extends StatelessWidget {
   final String title;
@@ -11,7 +12,7 @@ class DescriptionPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.red.shade700,
-        title: Text(title),
+        title: Text("حريق منزل في منطقة الجبيهة"),
         centerTitle: true,
       ),
       body: Container(
@@ -28,7 +29,7 @@ class DescriptionPage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: SingleChildScrollView(
             child: Text(
-              description,
+              "اندلع حريق هائل في منزل وسط منطقة الجبيهة في الأردن، وذلك بجوار مدرسة المنهل العالمية. وقد تلقت فرق الإطفاء البلاغ في الساعات الأولى من صباح اليوم، حيث تم نشر فرق الإنقاذ والإطفاء على الفور للتعامل مع الحادث",
               textAlign: TextAlign.right,
               style: const TextStyle(fontSize: 25, color: Colors.white),
             ),

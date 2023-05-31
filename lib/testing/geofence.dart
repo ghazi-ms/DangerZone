@@ -101,15 +101,13 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   /// Updates the polygons based on the retrieved data.
   void updatePolygons() {
     final polygonsTemp = <Polygon>{};
+
     for (final item in dangerZonesData) {
-      List coordinates = item['Coordinates'];
-      print(coordinates);
+      List<dynamic> coordinates = item['Coordinates'];
       final points = <LatLng>[];
       if (coordinates.length > 2) {
         for (var coordinate in coordinates) {
-          final lat = double.parse(coordinate[0].toString());
-          final lng = double.parse(coordinate[1].toString());
-          points.add(LatLng(lat, lng));
+          points.add(LatLng(coordinate[0], coordinate[1]));
         }
 
         if (polygons.isEmpty) {
@@ -144,16 +142,13 @@ class GeofenceState extends State<Geofence> with WidgetsBindingObserver {
   /// Updates the circles list.
   void updateCircles() {
     for (final item in dangerZonesData) {
-      final coordinates = item['Coordinates'];
+      List<dynamic> coordinates = item['Coordinates'];
 
       if (coordinates.length == 1) {
         setState(() {
           circles.add(Circle(
             circleId: CircleId(item['id'].toString()),
-            center: LatLng(
-              double.parse(coordinates.first[0].toString()),
-              double.parse(coordinates.first[1].toString()),
-            ),
+            center: LatLng(coordinates[0][0], coordinates[0][1]),
             radius: 100,
             fillColor: Colors.blue.withOpacity(0.5),
             strokeColor: Colors.blue,
