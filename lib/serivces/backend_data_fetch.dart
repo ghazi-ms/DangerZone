@@ -4,8 +4,8 @@ import 'package:http/http.dart';
 ///a class to connect to the [_apiEndpoint] and returns [_responseStatus] and [_response_message] to determine the result of the connection.
 ///* must have a working [_apiEndpoint].
 class BackendDataFetch {
-  late int _responseStatus;
-  late String _responseMessage;
+  int _responseStatus = -1;
+  String _responseMessage='لم يتم العثور على مناطق خطر';
   final String _apiEndpoint =
       "https://backendgradproject-z9mv-master-gtgu5kzprq-wl.a.run.app/";
   static final BackendDataFetch _instance = BackendDataFetch._internal();
@@ -21,8 +21,7 @@ class BackendDataFetch {
     dynamic dangerZonesData,
   ) async {
     try {
-      final response = await get(Uri.parse(_apiEndpoint))
-          .timeout(const Duration(minutes: 2));
+      final response = await get(Uri.parse(_apiEndpoint)).timeout(const Duration(minutes: 2));
       _responseStatus = response.statusCode;
       if (_responseStatus == 200) {
         _responseMessage = "!تم العثور على مناطق خطر جديدة";
@@ -30,7 +29,7 @@ class BackendDataFetch {
             json.decode(response.body).cast<Map<String, dynamic>>();
         processDangerZoneData(dangerZonesData, data);
       } else {
-        _responseMessage = "لم يتم العثور على مناطق خطر";
+
         throw 'Problem with the GET request';
       }
     } catch (e) {

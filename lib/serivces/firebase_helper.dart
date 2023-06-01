@@ -208,10 +208,9 @@ class FireBaseHelper {
 
       bool found = dangerZonesData
           .any((item) => item['id'].toString() == data['id'].toString());
-
       if (!found) {
         newDangerZones.add({
-          'Coordinates': data['Coordinates'],
+          'Coordinates': jsonDecode(data['Coordinates']),
           'Locations': data['Locations'],
           'description': data['description'],
           'id': data['id'],
@@ -219,6 +218,7 @@ class FireBaseHelper {
           'title': data['title'],
           'newsSource': data['newsSource'],
         });
+
       }
     }
 
