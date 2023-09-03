@@ -16,9 +16,9 @@ To run the Geofence App on your local machine, follow these steps:
 
 1. Clone this repository.
 2. Make sure you have Flutter and Dart installed.
-2. run the app either on local machine or as an APK on a android device.
+2. run the app either on a local machine or as an APK on an android device.
 3. open the app after installation and allow the usage of notifications services and location services
-4. leave the app in the back ground while the app will do the work by it self ! .
+4. leave the app in the background while the app will do the work by itself ! .
 
 ## Dependencies
 
